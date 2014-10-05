@@ -33,3 +33,6 @@ node_modules
 # Mac OS
 .DS_Store
 */.DS_Store
+
+# GFM Markdown preview
+.README.md.html
