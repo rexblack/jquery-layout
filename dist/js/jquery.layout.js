@@ -79,6 +79,110 @@
     for (var i = 0; i < prefixes.length; i++) if (typeof elem.style[prefixes[i] + capitalized] != "undefined") return prefixes[i] + capitalized;
     return null;
   })('transform', ['', 'Moz', 'Webkit', 'O', 'Ms']);
+
+  function parseAlign(string, priorities) {
+    priorities = priorities instanceof Array ? priorities : ['left', 'top'];
+    var result = {};
+    if (typeof string == 'number') {
+      result.left = string; 
+    }
+    if( typeof string == 'string' ) {
+      var aligns = string.split(/\s+/);
+      if ($.inArray('left', priorities) >= 0) {
+        var left = $.inArray('left', aligns) >= 0 ? 0 : $.inArray('center', aligns) >= 0 ? 0.5 : $.inArray('right', aligns) >= 0 ? 1 : -1;
+        if (left >= 0) {
+          result.left = left;
+        }
+      }
+      if ($.inArray('top', priorities) >= 0) {
+        var top = $.inArray('top', aligns) >= 0 ? 0 : $.inArray('middle', aligns) >= 0 ? 0.5 : $.inArray('bottom', aligns) >= 0 ? 1 : -1;
+        if (top >= 0) {
+          result.top = top;
+        }
+      }
+      for (var i = 0, align; align = aligns[i]; i++) {
+        var match = align.match(/([\+-]?\d+(?:\.\d+)?)(\%|px)?/);
+        if (match) {
+          var value = parseFloat(match[1]), unit = match[2], alignValue = -1;
+          if (unit == '%') {
+            alignValue = Math.max(0, Math.min(value / 100, 1));
+            alignValue = value / 100;
+          }
+          if (alignValue >= 0) {
+            if (typeof result[priorities[0]] == 'undefined') {
+              result[priorities[0]] = alignValue;
+            } else if (typeof result[priorities[1]] == 'undefined') {
+              result[priorities[1]] = alignValue;
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+        
+  function sortPrefilter(sort) {
+    if ( typeof sort == 'function' ) return sort;
+    if ( typeof sort == 'string' ) {
+      return function(a, b) {
+        var av = $(a).data(sort);
+        av = typeof av == 'undefined' ? '' : av;
+        var bv = $(b).data(sort);
+        bv = typeof bv == 'undefined' ? '' : bv;
+        return naturalSorter(av, bv);
+      };
+    }
+    if ( sort instanceof Array ) {
+      return function(a, b) {
+        var av = $.inArray(a, array);
+        var bv = $.inArray(b, array);
+        return naturalSorter(av, bv);
+      };
+    }
+    return function(a, b) {
+      return 0;
+    };
+  }
+  
+  function optionPrefilter(options) {
+    var opts = $.extend({}, options, {
+      // override
+      align: $.extend({left: 0, top: 0}, parseAlign(options.align), parseAlign(options.textAlign, ['left']), parseAlign(options.verticalAlign, ['top'])), 
+      style: (function(style) {
+        if (style == 'transform' && !transformStyle) {
+          return 'absolute';
+        };
+        return style;
+      })(options.style), 
+      sort: sortPrefilter(options.sort), 
+      columns: typeof options.columns == 'function' || typeof options.columns == 'number' ? options.columns : 0, 
+      stack: (function(stack) {
+        if ( typeof stack == 'boolean' && stack ) {
+          stack = 'center bottom';
+        }
+        if ( typeof stack == 'string' ) {
+          stack = {
+            align: stack
+          };
+        }
+        if ( typeof stack == 'object' ) {
+          stack.align = $.extend({left: 0.5, top: 1}, parseAlign(stack.align), parseAlign(stack.textAlign, ['left']), parseAlign(stack.verticalAlign, ['top'])); 
+          stack.sort = stack.sort ? sortPrefilter(stack.sort) : null;
+          stack.offset = (function(stackOffset) {
+            if ( typeof stackOffset == 'function' ) return stackOffset;
+            if ( typeof stackOffset == 'object' ) {
+              return function(index, length) {
+                return {top: stackOffset.top * index, left: stackOffset.left * index};
+              };
+            }
+            return 'auto';
+          })(stack.offset);
+        }
+        return stack;
+      })(options.stack) 
+    });
+    return opts;
+  }
   
   jQuery.fn.extend({
     
@@ -86,102 +190,19 @@
       
       options = $.extend({}, {
         // defaults
-        textAlign: 'left', 
-        key: '', 
-        sort: true, 
-        stack: true,  
-        orientation: 'horizontal', 
-        stackOffset: 'auto', 
-        style: 'transform'
+        sort: false, 
+        stack: false,  
+        style: 'absolute'
       }, options);
       
       // filter options
-      var opts = $.extend({}, options, {
-        // override
-        style: (function(style) {
-          if (style == 'transform' && !transformStyle) {
-            return 'absolute';
-          };
-          return style;
-        })(options.style), 
-        sort: (function(sort) {
-          if ( typeof sort == 'function' ) return sort;
-          if ( typeof sort == 'string' ) {
-            return function(a, b) {
-              var av = $(a).data(sort);
-              av = typeof av == 'undefined' ? '' : av;
-              var bv = $(b).data(sort);
-              bv = typeof bv == 'undefined' ? '' : bv;
-              return naturalSorter(av, bv);
-            };
-          }
-          if ( sort instanceof Array ) {
-            return function(a, b) {
-              var av = $.inArray(a, array);
-              var bv = $.inArray(b, array);
-              return naturalSorter(av, bv);
-            };
-          }
-          return function(a, b) {
-            return 0;
-          };
-        })(options.sort), 
-        columns: typeof options.columns == 'function' || typeof options.columns == 'number' ? options.columns : 0, 
-        stack: (function(stack) {
-          if (typeof stack == 'boolean' && stack) {
-            stack = 'center bottom';
-          }
-          if (typeof stack == 'object') {
-            stack.textAlign = typeof stack.textAlign == 'number' ? stack.textAlign : stack.textAlign.match(/center/) ? 0.5 : stack.textAlign.match(/right/) ? 1 : 0;
-            stack.verticalAlign = typeof stack.verticalAlign == 'number' ? stack.verticalAlign : stack.verticalAlign.match(/middle/) ? 0.5 : stack.verticalAlign.match(/bottom/) ? 1 : 0;
-          }
-          if (typeof stack == 'string') {
-            var aligns = stack.split(/\s+/);
-            stack = {
-              textAlign: $.inArray('center', aligns) >= 0 ? 0.5 : $.inArray('right', aligns) >= 0 ? 1 : 0, 
-              verticalAlign: $.inArray('middle', aligns) >= 0 ? 0.5 : $.inArray('bottom', aligns) >= 0 ? 1 : 0
-            };
-          }
-          return stack;
-        })(options.stack), 
-        stackOffset: (function(stackOffset) {
-          if ( typeof stackOffset == 'function' ) return stackOffset;
-          if ( typeof stackOffset == 'object' ) {
-            return function(index, length) {
-              return {top: stackOffset.top * index, left: stackOffset.left * index};
-            };
-          }
-          return 'auto';
-        })(options.stackOffset), 
-        itemOffset: (function(itemOffset) {
-          if ( typeof itemOffset == 'function' ) return itemOffset;
-          if ( typeof itemOffset == 'object' ) {
-            return function(index, length) {
-              return {top: itemOffset.top * index, left: itemOffset.left * index};
-            };
-          }
-          return 'auto';
-        })(options.itemOffset), 
-        textAlign: (function(textAlign) {
-          if ( typeof textAlign == 'number' ) return textAlign;
-          if ( typeof textAlign == 'string' ) {
-            return textAlign.match(/center/) ? 0.5 : textAlign.match(/right/) ? 1 : 0;
-          }
-          return 0;
-        })(options.textAlign),
-        verticalAlign: (function(verticalAlign) {
-          if ( typeof verticalAlign == 'number' ) return verticalAlign;
-          if ( typeof verticalAlign == 'string' ) {
-            return verticalAlign.match(/middle/) ? 0.5 : verticalAlign.match(/bottom/) ? 1 : 0;
-          }
-          return 0;
-        })(options.verticalAlign),  
-      });
+      var opts = optionPrefilter(options);
 
       //console.log("------> OPTS: ", JSON.stringify(opts, null, "  "));
       
+      var collection = this;
       // sort items
-      var sorted = this.toArray();
+      var sorted = collection.toArray();
       sorted.sort(opts.sort);
       
       // get parents / children
@@ -222,9 +243,12 @@
           var $elem = $(elem);
           $elem.css({
             position: 'relative', 
-            left: "0px", 
-            top: "0px"
+            left: "", 
+            top: "", 
           });
+          if (transformStyle) {
+            $elem.css(transformStyle, "");
+          }
           
           var nextElem = sorted[index + 1];
           var elemWidth = $elem.outerWidth(true);
@@ -235,13 +259,18 @@
             elem: this
           };
           elemDatas.push(elemData);
+          
           currentSet.elems.push(elemData);
           currentSet.width = Math.max(currentSet.width, elemWidth);
           
-          var newSet = !opts.stack && index < elems.length - 1 || index > 0 && options.sort && (opts.sort(elem, nextElem) != 0);
-          if (newSet || index == elems.length - 1) {
-            currentRow.width+= currentSet.width;
-            var newRow = index > 0 && (columnCount > 0 && currentRow.sets.length + 1 > columnCount || columnCount == 0 && currentRow.width > parentWidth); 
+          var newRow = false;
+          var sort = opts.stack && opts.stack.sort ? opts.stack.sort : opts.sort;
+          var newSet = !opts.stack && index < elems.length - 1 || index > 0 && sort && (sort.call(collection, elem, nextElem) != 0);
+          
+          if (newSet) {
+            
+            newRow = index > 0 && (columnCount > 0 && currentRow.sets.length + 1 > columnCount || columnCount == 0 && currentSet.left + currentSet.width + elemWidth >= parentWidth); 
+            
             if (newRow) {
               // new row
               currentRow = {
@@ -252,13 +281,16 @@
               rows.push(currentRow);
               columnCount = typeof opts.columns == 'function' ? opts.columns.call(this, rows.length - 1) : opts.columns;
             }
+            
           }
-          if (newSet) {
+          
+          
+          if (newSet && index < elems.length - 1) {
             // new set
             currentSet = {
               width: elemWidth, 
               height: 0, 
-              left: currentRow.width,
+              left: newRow ? 0 : currentSet.left + currentSet.width,
               top: totalHeight, 
               elems: []
             };
@@ -266,9 +298,10 @@
             currentRow.sets.push(currentSet);
           }
           
+          currentRow.width = currentSet.left + currentSet.width;
+          
+          
         });
-        
-        //console.log("------> ROWS: ", JSON.stringify(rows, null, "  "));
         
         for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
           
@@ -287,8 +320,8 @@
               var elemWidth = elemData.height;
               var elemHeight = elemData.height;
               
-              var computedOffset = typeof opts.stackOffset == 'function';
-              offset = computedOffset ? opts.stackOffset.call(elem, stackIndex, elems.length, offset) : offset;
+              var computedOffset = opts.stack && typeof opts.stack.offset == 'function';
+              offset = computedOffset ? opts.stack.offset.call(elem, stackIndex, elems.length, offset) : offset;
 
               elemData.offset = {
                 left: offset.left, 
@@ -313,7 +346,7 @@
           totalHeight+= row.height;
         }
         
-        //console.log("------> ROWS: ", JSON.stringify(rows, null, "  "));
+        
         
         for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
           for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
@@ -323,11 +356,15 @@
               var elemWidth = elemData.height;
               var elemHeight = elemData.height;
               
-              var ha = (parentWidth >= 0 ? Math.max((parentWidth - row.width) * opts.textAlign, 0) : 0);
-              var va = (parentHeight >= 0 ? Math.max((parentHeight - totalHeight) * opts.verticalAlign, 0) : 0);
+              var ha = (parentWidth >= 0 ? Math.max((parentWidth - row.width) * opts.align.left, 0) : 0);
+              var va = (parentHeight >= 0 ? Math.max((parentHeight - totalHeight) * opts.align.top, 0) : 0);
               
               var left = ha + set.left;
-              var top = va + set.top + (row.height - set.height) * (opts.stack.verticalAlign ? opts.stack.verticalAlign : 0);
+              var top = va + set.top;
+              
+              if (opts.stack) {
+                top+= (row.height - set.height) * (opts.stack.align.top ? opts.stack.align.top : 0);
+              } 
               
               elemData.stackIndex = stackIndex;
               elemData.set = set;
@@ -344,30 +381,34 @@
         
         // sort by positions and stack-index
         elemDatas.sort(function(a, b) {
-          console.log("sort: ", a, b);
-          if (a.set == b.set) {
-            // same set, order by stack-index
-            console.log("order by stack-index");
-            return sets.length - a.stackIndex - sets.length - b.stackIndex;
+          var pos = (a.set.top - b.set.top) * (a.set.left - b.set.left);
+          if (pos == 0) {
+            return a.stackIndex - b.stackIndex;
           }
-          return (a.offset.top - b.offset.top) * (a.offset.left - b.offset.left);
         });
         
         $(elemDatas).each(function(index, elemData) {
           
           var left = elemData.left;
           var top = elemData.top;
+          var zIndex = elemDatas.length - index;
           
-          var css = {
-            position: 'absolute', 
-            zIndex: elemDatas.length - index
-          };
+          var css = {};
           
           if (opts.style == 'transform') {
+            // transform
             css[transformStyle] = 'translate(' + left + "px, " + top + "px)";
-          } else {
+            css.position = 'absolute';
+            css.zIndex = zIndex;
+          } else if (opts.style == 'absolute') {
+            // absolute
+            css.position = 'absolute';
             css.left = left + "px";
             css.top = top + "px";
+            css.zIndex = zIndex;
+          } else {
+            // static
+            
           }
           
           $(elemData.elem).css(css);
@@ -376,10 +417,14 @@
         
         
         if (isAutoHeight(offsetParent)) {
-          $offsetParent.css('height', totalHeight);
+          $offsetParent.css({
+            height: totalHeight, 
+            position: 'relative'
+          });
         }
         
         return;
+        
         for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
           for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
             var elems = set.elems;
