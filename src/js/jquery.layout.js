@@ -1,5 +1,9 @@
 (function($, window) {
   
+  function shuffle(o) {
+    for( var j, x, i = o.length; i; j = Math.floor(Math.random() * i ), x = o[--i], o[i] = o[j], o[j] = x); return o;
+  };
+  
   // http://stackoverflow.com/questions/19247495/alphanumeric-sorting-an-array-in-javascript
   // Added: handle numeric type
   function naturalSorter(as, bs) {
@@ -123,6 +127,11 @@
         
   function sortPrefilter(sort) {
     if ( typeof sort == 'function' ) return sort;
+    if ( sort == 'shuffle' ) {
+      sort = this.toArray();
+      sort = shuffle(sort);
+      console.log("shuffle array", sort);
+    }
     if ( typeof sort == 'string' ) {
       return function(a, b) {
         var av = $(a).data(sort);
@@ -134,8 +143,8 @@
     }
     if ( sort instanceof Array ) {
       return function(a, b) {
-        var av = $.inArray(a, array);
-        var bv = $.inArray(b, array);
+        var av = $.inArray(a, sort);
+        var bv = $.inArray(b, sort);
         return naturalSorter(av, bv);
       };
     }
@@ -154,7 +163,7 @@
         };
         return style;
       })(options.style), 
-      sort: sortPrefilter(options.sort), 
+      sort: sortPrefilter.call(this, options.sort), 
       columns: typeof options.columns == 'function' || typeof options.columns == 'number' ? options.columns : 0, 
       stack: (function(stack) {
         if ( typeof stack == 'boolean' && stack ) {
@@ -167,7 +176,7 @@
         }
         if ( typeof stack == 'object' ) {
           stack.align = $.extend({left: 0.5, top: 1}, parseAlign(stack.align), parseAlign(stack.textAlign, ['left']), parseAlign(stack.verticalAlign, ['top'])); 
-          stack.sort = stack.sort ? sortPrefilter(stack.sort) : null;
+          stack.sort = stack.sort ? sortPrefilter.call(this, stack.sort) : null;
           stack.offset = (function(stackOffset) {
             if ( typeof stackOffset == 'function' ) return stackOffset;
             if ( typeof stackOffset == 'object' ) {
@@ -205,7 +214,7 @@
       }, options);
       
       // filter options
-      var opts = optionPrefilter(options);
+      var opts = optionPrefilter.call(this, options);
 
       //console.log("------> OPTS: ", opts, JSON.stringify(opts, null, "  "));
       
