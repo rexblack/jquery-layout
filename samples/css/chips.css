@@ -126,4 +126,11 @@
 
 .chips .chip {
   margin: 10px 2px 10px;
+  font-size: 12px;
+}
+
+.chips.chips-balance {
+  position: absolute;
+  top: 60%;
+  width: 100%;
 }
