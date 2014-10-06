@@ -130,7 +130,6 @@
     if ( sort == 'shuffle' ) {
       sort = this.toArray();
       sort = shuffle(sort);
-      console.log("shuffle array", sort);
     }
     if ( typeof sort == 'string' ) {
       return function(a, b) {
@@ -190,289 +189,288 @@
         return stack;
       })(options.stack), 
       item: (function(item) {
-        if (typeof item == 'function') return item;
-        return $.extend({}, {offset: {top: 0, left: 0}}, options.item);
+        if (typeof item == 'string') {
+          item = {
+            selector: item
+          };
+        }
+        return $.extend({}, {selector: " > *", offset: {top: 0, left: 0}}, item);
       })(options.item)
     });
     return opts;
   }
   
-  jQuery.fn.extend({
-    
-    layout: function(options) {
-      
-      options = $.extend({}, {
-        // defaults
-        sort: false, 
-        stack: false,  
-        style: 'absolute', 
-        item: {
-          offset: {
-            left: 0, top: 0
-          }
-        }
-      }, options);
-      
-      // filter options
-      var opts = optionPrefilter.call(this, options);
-
-      //console.log("------> OPTS: ", opts, JSON.stringify(opts, null, "  "));
-      
-      var collection = this;
-      // sort items
-      var sorted = collection.toArray();
-      sorted.sort(opts.sort);
-      
-      // get parents / children
-      var parents = [], children = [];
-      $(sorted).each(function(index, elem) {
-        var offsetParent = $(elem).offsetParent()[0];
-        var parentIndex = $.inArray(offsetParent, parents);
-        if (parentIndex < 0) {
-          parents.push(offsetParent);
-          parentIndex = parents.length - 1;
-        }
-        var elems = children[parentIndex] = children[parentIndex] || [];
-        elems.push(elem);
-      });
-      
-      $(parents).each(function(index, elem) {
-        
-        var offsetParent = this, $offsetParent = $(this);
-        
-        $offsetParent.css('height', '');
-        
-        var parentWidth = $offsetParent.innerWidth();
-        var parentHeight = $offsetParent.innerHeight();
-        
-        var elems = $(children[index]);
-        var elemDatas = [];
-        var currentSet = {elems: [], left: 0, top: 0, width: 0, height: 0};
-        var sets = [currentSet];
-        var totalWidth = 0;
-        var totalHeight = 0;
-        var rows = [{width: 0, height: 0, sets: [currentSet]}];
-        var currentRow = rows[0];
-        var columnCount = typeof opts.columns == 'function' ? opts.columns.call(this, 0) : opts.columns;
-        var currentWidth = 0;
-        
-        $(elems).each(function(index, elem) {
-          
-          var $elem = $(elem);
-          $elem.css({
-            position: 'relative', 
-            left: "", 
-            top: "", 
-          });
-          if (transformStyle) {
-            $elem.css(transformStyle, "");
-          }
-          
-          var nextElem = sorted[index + 1];
-          var elemWidth = $elem.outerWidth(true);
-          var elemHeight = $elem.outerHeight(true);
-          var elemData = {
-            width: elemWidth, 
-            height: elemHeight,   
-            elem: this
-          };
-          elemDatas.push(elemData);
-          
-          currentSet.elems.push(elemData);
-          currentSet.width = Math.max(currentSet.width, elemWidth);
-          
-          var newRow = false;
-          var sort = opts.stack && opts.stack.sort ? opts.stack.sort : opts.sort;
-          var newSet = !opts.stack && index < elems.length - 1 || sort && (sort.call(collection, elem, nextElem) != 0);
-          
-          if (newSet) {
-            
-            newRow = index > 0 && (columnCount > 0 && currentRow.sets.length + 1 > columnCount || columnCount == 0 && currentSet.left + currentSet.width + elemWidth >= parentWidth); 
-            
-            if (newRow) {
-              // new row
-              currentRow = {
-                width: 0, 
-                height: 0, 
-                sets: []
-              };
-              rows.push(currentRow);
-              columnCount = typeof opts.columns == 'function' ? opts.columns.call(this, rows.length - 1) : opts.columns;
-            }
-            
-          }
-          
-          
-          if (newSet && index < elems.length - 1) {
-            // new set
-            currentSet = {
-              width: elemWidth, 
-              height: 0, 
-              left: newRow ? 0 : currentSet.left + currentSet.width,
-              top: totalHeight, 
-              elems: []
-            };
-            sets.push(currentSet);
-            currentRow.sets.push(currentSet);
-          }
-          
-          currentRow.width = currentSet.left + currentSet.width;
-          
-          
-        });
-        
-        for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
-          
-          row.height = 0;
-          
-          for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
-            
-            set.offset = typeof opts.item.offset == 'function' ? opts.item.offset.call($(set.elems), setIndex, row.sets.length) : {top: opts.item.offset.top * setIndex, left: opts.item.offset.left * setIndex};
-
-            var offset = {
-              left: 0, 
-              top: 0
-            };
-            
-            for (var stackIndex = 0, elemData; elemData = set.elems[stackIndex]; stackIndex++) {
-              
-              var elem = elemData.elem;
-              var elemWidth = elemData.height;
-              var elemHeight = elemData.height;
-              
-              var computedOffset = opts.stack && typeof opts.stack.offset == 'function';
-              offset = computedOffset ? opts.stack.offset.call(elem, stackIndex, elems.length, offset) : offset;
-
-              elemData.offset = {
-                left: offset.left, 
-                top: offset.top
-              };
-              
-              if (!computedOffset) {
-                offset.top+= $(elem).height();
-              }
-              
-            }
-            
-            // sort after position
-            set.elems.sort(function(a, b) {
-              return a.offset.top - b.offset.top;
-            });
-            
-            set.height =  set.elems[set.elems.length - 1].offset.top + set.elems[set.elems.length - 1].height;
-            row.height = Math.max(row.height, set.height);
-            
-            set.top = totalHeight;
-          }
-          totalHeight+= row.height;
-        }
-        
-        
-        
-        for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
-          for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
-            for (var stackIndex = 0, elemData; elemData = set.elems[stackIndex]; stackIndex++) {
-
-              var elem = elemData.elem;
-              var elemWidth = elemData.height;
-              var elemHeight = elemData.height;
-              
-              var ha = (parentWidth >= 0 ? Math.max((parentWidth - row.width) * opts.align.left, 0) : 0);
-              var va = (parentHeight >= 0 ? Math.max((parentHeight - totalHeight) * opts.align.top, 0) : 0);
-              
-              var left = ha + set.left;
-              var top = va + set.top;
-              
-              left+= set.offset.left;
-              top+= set.offset.top;
-              
-              if (opts.stack) {
-                top+= (row.height - set.height) * (opts.stack.align.top ? opts.stack.align.top : 0);
-              } 
-              
-              elemData.stackIndex = stackIndex;
-              elemData.set = set;
-              
-              left+= elemData.offset.left;
-              top+= elemData.offset.top;
-              
-              elemData.left = left;
-              elemData.top = top;
-              
-            }
-          }
-        }
-        
-        // sort by positions and stack-index
-        elemDatas.sort(function(a, b) {
-          var pos = (a.set.top - b.set.top) * (a.set.left - b.set.left);
-          if (pos == 0) {
-            return a.stackIndex - b.stackIndex;
-          }
-        });
-        
-        $(elemDatas).each(function(index, elemData) {
-          
-          var left = elemData.left;
-          var top = elemData.top;
-          var zIndex = elemDatas.length - index;
-          
-          var css = {};
-          
-          if (opts.style == 'transform') {
-            // transform
-            css[transformStyle] = 'translate(' + left + "px, " + top + "px)";
-            css.position = 'absolute';
-            css.zIndex = zIndex;
-          } else if (opts.style == 'absolute') {
-            // absolute
-            css.position = 'absolute';
-            css.left = left + "px";
-            css.top = top + "px";
-            css.zIndex = zIndex;
-          } else {
-            // static
-            
-          }
-          
-          $(elemData.elem).css(css);
-          
-        });
-        
-        
-        if (isAutoHeight(offsetParent)) {
-          $offsetParent.css({
-            height: totalHeight, 
-            position: 'relative'
-          });
-        }
-        
-        return;
-        
-        for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
-          for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
-            var elems = set.elems;
-            $(elems).each(function(stackIndex, elem) {
-              var $elem = $(elem);
-              var isRelative = opts.style == 'relative' && stackIndex == elems.length - 1;
-              if (isRelative) {
-                var pos = set.positions[stackIndex];
-                var elemPos = $elem.position();
-                var left = pos.left + set.left - elemPos.left;
-                var top = pos.top + set.top - elemPos.top;
-                $(this).css({
-                  left: left + "px", 
-                  top: top + "px", 
-                  zIndex: stackIndex
-                });
-              }
-            });
-          }
-        }
-      });
-      
+  var pluginName = "layout";
+  var defaults = {
+    align: 'left top', 
+    bindResize: true, 
+    sort: false, 
+    stack: false,  
+    style: 'absolute', 
+    item: {
+      offset: {
+        left: 0, top: 0
+      }
     }
-  });
+  };
   
+  function Layout(elem, options) {
+    
+    var instance = this, $elem = $(elem);
+    this.elem = elem;
+    
+    var elems = [], elemDatas = [];
+    
+    function resizeHandler(e) {
+      instance.render();
+    }
+    
+    this.render = function(options) {
+      
+      // options
+      var opts = optionPrefilter.call(this, this.options = $.extend({}, defaults, this && this.options, options));
+      
+      // resize handler
+      $(window).off('resize', resizeHandler);
+      if (opts.bindResize) {
+        $(window).on('resize', resizeHandler);
+      }
+      
+      // find and sort elems
+      var items = $elem.find(opts.item.selector).toArray(), elemDatas = []; 
+      items.sort(opts.sort);
+      
+      elems = $.grep(items, function(elem, index) {
+        return $(elem).is(":visible");
+      });
+      
+      var 
+        parent = this.elem, 
+        $parent = $elem, 
+        parentWidth = $parent.innerWidth(), 
+        parentHeight = $parent.innerHeight(), 
+        totalWidth = 0, 
+        totalHeight = 0; 
+         
+      
+      // setup data
+      var 
+        currentSet = {elems: [], left: 0, top: 0, width: 0, height: 0}, 
+        sets = [currentSet], 
+        rows = [{width: 0, height: 0, sets: [currentSet]}], 
+        currentRow = rows[0], 
+        columnCount = typeof opts.columns == 'function' ? opts.columns.call(this, 0) : opts.columns, 
+        currentWidth = 0;
+      
+      $(elems).each(function(index, elem) {
+        var $elem = $(elem);
+        $elem.css({
+          position: 'relative', 
+          left: "", 
+          top: "", 
+        });
+        if (transformStyle) {
+          $elem.css(transformStyle, "");
+        }
+        var nextElem = elems[index + 1];
+        var elemWidth = $elem.outerWidth(true);
+        var elemHeight = $elem.outerHeight(true);
+        var elemData = {
+          width: elemWidth, 
+          height: elemHeight,   
+          elem: this
+        };
+        elemDatas.push(elemData);
+        
+        currentSet.elems.push(elemData);
+        currentSet.width = Math.max(currentSet.width, elemWidth);
+        
+        var newRow = false;
+        var sort = opts.stack && opts.stack.sort ? opts.stack.sort : opts.sort;
+        var newSet = !opts.stack && index < elems.length - 1 || sort && (sort.call(elems, elem, nextElem) != 0);
+        
+        if (newSet) {
+          
+          newRow = index > 0 && (columnCount > 0 && currentRow.sets.length + 1 > columnCount || columnCount == 0 && currentSet.left + currentSet.width + elemWidth >= parentWidth); 
+          
+          if (newRow) {
+            // new row
+            currentRow = {
+              width: 0, 
+              height: 0, 
+              sets: []
+            };
+            rows.push(currentRow);
+            columnCount = typeof opts.columns == 'function' ? opts.columns.call(this, rows.length - 1) : opts.columns;
+          }
+        }
+        
+        if (newSet && index < elems.length - 1) {
+          // new set
+          currentSet = {
+            width: elemWidth, 
+            height: 0, 
+            left: newRow ? 0 : currentSet.left + currentSet.width,
+            top: totalHeight, 
+            elems: []
+          };
+          sets.push(currentSet);
+          currentRow.sets.push(currentSet);
+        }
+        
+        currentRow.width = currentSet.left + currentSet.width;
+      });
+        
+      
+      for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
+        
+        row.height = 0;
+        
+        for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
+          
+          set.offset = typeof opts.item.offset == 'function' ? opts.item.offset.call($(set.elems), setIndex, row.sets.length) : {top: opts.item.offset.top * setIndex, left: opts.item.offset.left * setIndex};
+
+          var offset = {
+            left: 0, 
+            top: 0
+          };
+          
+          for (var stackIndex = 0, elemData; elemData = set.elems[stackIndex]; stackIndex++) {
+            
+            var elem = elemData.elem;
+            var elemWidth = elemData.height;
+            var elemHeight = elemData.height;
+            
+            var computedOffset = opts.stack && typeof opts.stack.offset == 'function';
+            offset = computedOffset ? opts.stack.offset.call(elem, stackIndex, elems.length, offset) : offset;
+
+            elemData.offset = {
+              left: offset.left, 
+              top: offset.top
+            };
+            
+            if (!computedOffset) {
+              offset.top+= $(elem).height();
+            }
+            
+          }
+          
+          // sort after position
+          set.elems.sort(function(a, b) {
+            return a.offset.top - b.offset.top;
+          });
+          
+          set.height =  set.elems.length > 0 ? set.elems[set.elems.length - 1].offset.top + set.elems[set.elems.length - 1].height : 0;
+          row.height = Math.max(row.height, set.height);
+          
+          set.top = totalHeight;
+        }
+        totalHeight+= row.height;
+      }
+      
+      // setup coords
+      
+      for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
+        for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
+          for (var stackIndex = 0, elemData; elemData = set.elems[stackIndex]; stackIndex++) {
+
+            var elem = elemData.elem;
+            var elemWidth = elemData.height;
+            var elemHeight = elemData.height;
+            
+            var ha = (parentWidth >= 0 ? Math.max((parentWidth - row.width) * opts.align.left, 0) : 0);
+            var va = (parentHeight >= 0 ? Math.max((parentHeight - totalHeight) * opts.align.top, 0) : 0);
+            
+            var left = ha + set.left;
+            var top = va + set.top;
+            
+            left+= set.offset.left;
+            top+= set.offset.top;
+            
+            if (opts.stack) {
+              top+= (row.height - set.height) * (opts.stack.align.top ? opts.stack.align.top : 0);
+            } 
+            
+            elemData.stackIndex = stackIndex;
+            elemData.set = set;
+            
+            left+= elemData.offset.left;
+            top+= elemData.offset.top;
+            
+            elemData.left = left;
+            elemData.top = top;
+            
+          }
+        }
+      }
+      
+      // sort by positions and stack-index
+      elemDatas.sort(function(a, b) {
+        var pos = (a.set.top - b.set.top) * (a.set.left - b.set.left);
+        if (pos == 0) {
+          return a.stackIndex - b.stackIndex;
+        }
+      });
+      
+      // update elems
+      elems = $.map(elemDatas, function(index, elemData) {
+        return elemData.elem;
+      });
+      
+      
+      // render elems
+      $(elemDatas).each(function(index, elemData) {
+        
+        var left = elemData.left;
+        var top = elemData.top;
+        var zIndex = elemDatas.length - index;
+        
+        var css = {};
+        
+        if (opts.style == 'transform') {
+          // transform
+          css[transformStyle] = 'translate(' + left + "px, " + top + "px)";
+          css.position = 'absolute';
+          css.zIndex = zIndex;
+        } else if (opts.style == 'absolute') {
+          // absolute
+          css.position = 'absolute';
+          css.left = left + "px";
+          css.top = top + "px";
+          css.zIndex = zIndex;
+        } else {
+          // static
+          
+        }
+        
+        $(elemData.elem).css(css);
+        
+      });
+      
+      if (isAutoHeight(parent)) {
+        $parent.css({
+          height: totalHeight, 
+          position: 'relative'
+        });
+      }
+      
+    };
+    
+    this.render(options);
+    
+  };
+  
+  var pluginClass = Layout;
+  jQuery.fn[pluginName] = function(options) {
+    return this.each(function() {
+      var instance = $(this).data(pluginName);
+      if (!instance) {
+        instance = $(this).data(pluginName, new Layout(this, options));
+      } else {
+        instance.render(options);
+      }
+      return $(this);
+    });
+  };
   
 })(jQuery, window);
