@@ -29,6 +29,7 @@
         </p>
         
         <form class="form-inline form-group" role="form">
+          <button id="go" type="button" class="btn btn-default">Relayout</button>
           <div class="btn-group">
             <a data-align-command="left" href="#" class="btn btn-default"><i class="glyphicon glyphicon-align-left"> </i></a>
             <a data-align-command="center" href="#" class="btn btn-default"><i class="glyphicon glyphicon-align-center"> </i></a>
@@ -54,7 +55,6 @@
         <div class="chips chips-1">
           <div class="chip c1" data-value="10"></div>
           <div class="chip c2" data-value="10"></div>
-          <div class="chip c3" data-value="30"></div>
           <div class="chip c4"></div>
           <div class="chip c6" data-value="40"></div>
           <div class="chip c7"></div>
@@ -65,9 +65,15 @@
           <div class="chip c11" data-value="40"></div>
         </div>
         
+        
         <script>
           
           $(function() {
+            
+            
+            $('#go').click(function() {
+              $('.chips').layout();
+            });
             
             var selectedAlign = 'left';
           
@@ -78,13 +84,13 @@
             });
             
             function layout() {
-              $('.chip').layout({
+              $('.chips').layout({
                 textAlign: selectedAlign, 
-                sort: $(".example-1 input[type='checkbox'][name='sort']:checked").length > 0 ? 'value' : false,
+                sort: $(".example-1 input[type='checkbox'][name='sort']:checked").length > 0 ? 'value' : false, 
                 stack: $(".example-1 input[type='checkbox'][name='stack']:checked").length > 0 ? {sort: 'value', offset: {top: 10, left: 0}} : false,
                 order: 'desc', 
                 columns: 0, 
-                style: $(".example-1 select[name='style']").val()
+                style: $(".example-1 select[name='style']").val() 
               });
             }
             
@@ -96,6 +102,9 @@
           
           
         </script>
+        
+        
+        
       
       </section>
       
