@@ -129,8 +129,6 @@
   font-size: 12px;
 }
 
-.chips.chips-balance {
-  position: absolute;
-  top: 60%;
-  width: 100%;
+.label-default {
+  margin-bottom: 10px;
 }
