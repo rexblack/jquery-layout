@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>jquery-transmate | animated blocks</title>
+    <!-- example dependencies -->
+    <link rel="stylesheet" href="vendor/components/bootstrap/dist/css/bootstrap.css">
+    <script src="vendor/components/jquery/jquery.js"></script>
+    
+    <script src="../src/js/jquery.layout.js"></script>
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/blocks.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/chips.css">
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>jquery.layout <small>advanced</small></h1>
+      </div>
+      
+      
+      <section class="example example-1">
+        
+        <h2>Example</h2>
+        <p>
+          <em>An interactive layout.</em>
+        </p>
+        
+        <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">Bet <span class="label label-default label-bet">0</span></h4>
+            </div>
+            <div class="panel-body">
+              <div class="chips chips-bet"></div>
+            </div>
+        </div>
+       
+       
+        <div class="panel panel-default">
+          
+          <div class="panel-heading">
+            <h4 class="panel-title">Balance <span class="label label-default label-balance">100</span></h4>
+          </div>
+          
+          <div class="panel-body">
+            <div class="chips chips-balance">
+              <div class="chip c1" data-value="10"></div>
+              <div class="chip c2" data-value="10"></div>
+              <div class="chip c3" data-value="30"></div>
+              <div class="chip c4" data-value="30"></div>
+              <div class="chip c5" data-value="20"></div>
+              <div class="chip c6" data-value="40"></div>
+              <div class="chip c7" data-value="40"></div>
+              <div class="chip c8" data-value="30"></div>
+              <div class="chip c9" data-value="20"></div>
+              <div class="chip c10" data-value="10"></div>
+            </div>
+          </div>
+          
+        </div>
+        
+        
+        
+        
+        <style>
+          .chips {
+            position: relative;
+            min-height: 100px;
+            margin-bottom: 20px;
+          }
+        </style>
+        
+        <script>
+        
+          (function() {
+            
+            var balance = 100;
+            var currentBet = 0;
+            
+            var values = [10, 20, 30, 40];
+            
+            function updateBalance() {
+              $('.label-balance').html(balance - currentBet);
+              $('.label-bet').html(currentBet);
+              
+              var chips = $(".chips-balance > .chip").toArray();
+              chips.sort(function(a, b) {
+                return $(a).data('value') < $(b).data('value');
+              });
+              
+              // remove duplicates
+              $(chips)
+                .filter(function(index) {
+                  return $(this).data('value') === $(chips[index + 1]).data('value');
+                })
+                .remove();
+              
+              // add balanced
+              $.each($.grep(values, function(value) {
+                return balance - currentBet >= value && $.inArray(value, $.map(chips, function(elem, index) {
+                   return parseInt($(elem).data('value'));
+                })) < 0;
+              }), function(index, value) {
+                $('.chips-balance').append($('<div class="chip" data-value="' + value + '"></div>'));
+              });
+              
+              // hide unbalanced
+              $(chips) 
+                .filter(function(index) {
+                  return balance - currentBet < $(this).data('value');
+                })
+                .hide();
+              
+              // show balanced
+              $(".chips-balance > .chip:hidden").filter(function(index, elem) {
+                return balance - currentBet >= $(this).data('value');
+              }).show();
+              
+            }
+            
+            function layout() {
+              $('.chips').layout({
+                verticalAlign: 'bottom',
+                textAlign: 'center',  
+                sort: 'value', 
+                order: 'desc', 
+                stack: {
+                  sort: 'value', 
+                  offset: {
+                    top: -10, 
+                    left: 0
+                  }
+                }
+              });
+            }
+            
+            $( ".chips " ).on('click', function(e) {
+              var $eventTarget = $(e.target);
+              var $elem = $eventTarget.is('.chip') ? $eventTarget : $eventTarget.parents('.chip').first();
+              if ($elem.length) {
+                var clicked = $elem;
+                var $elem = $elem.siblings().andSelf().filter(function() {
+                  return $(this).data('value') == $(clicked).data('value');
+                }).last();
+                if ($elem.parent().is('.chips-bet')) {
+                  currentBet-= $elem.data('value');
+                  $( ".chips-balance" ).append($elem);
+                } else {
+                  currentBet+= $elem.data('value');
+                  $( ".chips-bet" ).append($elem);
+                }
+                updateBalance();
+                layout();
+              }
+            });
+
+            updateBalance();
+            layout();
+            
+          
+          })();
+          
+        </script>
+        
+        
+        
+        
+      </section>
+      
+    </div>
+  </body>
+</html>
