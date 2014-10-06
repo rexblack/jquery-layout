@@ -182,7 +182,7 @@
       })(options.stack), 
       item: (function(item) {
         if (typeof item == 'function') return item;
-        return $.extend({}, {top: 0, left: 0}, options.item);
+        return $.extend({}, {offset: {top: 0, left: 0}}, options.item);
       })(options.item)
     });
     return opts;
@@ -207,7 +207,7 @@
       // filter options
       var opts = optionPrefilter(options);
 
-      //console.log("------> OPTS: ", JSON.stringify(opts, null, "  "));
+      //console.log("------> OPTS: ", opts, JSON.stringify(opts, null, "  "));
       
       var collection = this;
       // sort items
@@ -274,7 +274,7 @@
           
           var newRow = false;
           var sort = opts.stack && opts.stack.sort ? opts.stack.sort : opts.sort;
-          var newSet = !opts.stack && index < elems.length - 1 || index > 0 && sort && (sort.call(collection, elem, nextElem) != 0);
+          var newSet = !opts.stack && index < elems.length - 1 || sort && (sort.call(collection, elem, nextElem) != 0);
           
           if (newSet) {
             
@@ -316,7 +316,6 @@
           
           row.height = 0;
           
-          
           for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
             
             set.offset = typeof opts.item.offset == 'function' ? opts.item.offset.call($(set.elems), setIndex, row.sets.length) : {top: opts.item.offset.top * setIndex, left: opts.item.offset.left * setIndex};
@@ -343,6 +342,7 @@
               if (!computedOffset) {
                 offset.top+= $(elem).height();
               }
+              
             }
             
             // sort after position
