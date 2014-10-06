@@ -179,7 +179,11 @@
           })(stack.offset);
         }
         return stack;
-      })(options.stack) 
+      })(options.stack), 
+      item: (function(item) {
+        if (typeof item == 'function') return item;
+        return $.extend({}, {top: 0, left: 0}, options.item);
+      })(options.item)
     });
     return opts;
   }
@@ -192,7 +196,12 @@
         // defaults
         sort: false, 
         stack: false,  
-        style: 'absolute'
+        style: 'absolute', 
+        item: {
+          offset: {
+            left: 0, top: 0
+          }
+        }
       }, options);
       
       // filter options
@@ -307,8 +316,11 @@
           
           row.height = 0;
           
+          
           for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
             
+            set.offset = typeof opts.item.offset == 'function' ? opts.item.offset.call($(set.elems), setIndex, row.sets.length) : {top: opts.item.offset.top * setIndex, left: opts.item.offset.left * setIndex};
+
             var offset = {
               left: 0, 
               top: 0
@@ -361,6 +373,9 @@
               
               var left = ha + set.left;
               var top = va + set.top;
+              
+              left+= set.offset.left;
+              top+= set.offset.top;
               
               if (opts.stack) {
                 top+= (row.height - set.height) * (opts.stack.align.top ? opts.stack.align.top : 0);
