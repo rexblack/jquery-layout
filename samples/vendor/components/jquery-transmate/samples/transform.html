@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>jquery-transmate | per-prop options</title>
+    <!-- example dependencies -->
+    <link rel="stylesheet" href="vendor/components/bootstrap/dist/css/bootstrap.css">
+    <script src="vendor/components/jquery/jquery.js"></script>
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/blocks.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/chips.css">
+    
+    <script src="../dist/js/jquery.transmate.js"></script>
+    
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>jquery.transmate <small>transform</small></h1>
+      </div>
+      
+      <div class="example example-1">
+        <h2>Example</h2>
+        <p><em>This example demonstrates the usage of css-transforms</em></p>
+        <form class="form-inline form-group">
+          <button class="go btn btn-default" type="button">Run</button>
+          <button id="stop" class="stop btn btn-default" type="button">STOP!</button>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="css_transitions" value="value" checked> cssTransitions
+            </label>
+          </div>
+        </form>
+        
+        <div class="blocks">
+          <div id="test" class="block">1</div>
+          <div id="test" class="block">2</div>
+        </div>
+        
+        <script>
+          $(function() {
+            
+            // Stop animation when button is clicked
+            $( "#stop" ).click(function() {
+              console.log("stop");
+              $( ".block" ).stop();
+            });
+              
+            $('.example-1 .go').on('click', function() {
+              $('.block').stop(true).css({
+                transform: '', 
+                WebkitTransform: '', 
+                MozTransform: ''
+              });
+              $('.block').animate({transform: "translate(50px,50px)"}, {
+                cssTransitions: $(".example-1 input[type='checkbox'][name='css_transitions']:checked").length > 0, 
+                easing: 'swing', 
+                duration: 1000, 
+                delay: 0, 
+                item: {
+                  delay: 400
+                }
+              }).promise().done(function() {
+                console.warn("promise done");
+              });
+            });
+            
+          });
+          
+        </script>
+      </div>
+      
+      
+    
+    </div>
+  </body>
+</html>

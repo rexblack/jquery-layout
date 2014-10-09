@@ -1,0 +1,13 @@
+{
+  "name": "jquery-layout",
+  "homepage": "https://github.com/benignware/jquery-layout",
+  "_release": "fa722097f2",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "fa722097f247127afeaa5becd0b0c63b7274c4a1"
+  },
+  "_source": "https://github.com/benignware/jquery-layout.git",
+  "_target": "*",
+  "_originalSource": "https://github.com/benignware/jquery-layout.git"
+}

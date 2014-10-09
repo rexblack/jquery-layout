@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>jquery-layout</title>
+    <!-- example dependencies -->
+    <link rel="stylesheet" href="vendor/components/bootstrap/dist/css/bootstrap.css">
+    <script src="vendor/components/jquery/jquery.js"></script>
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/blocks.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/chips.css">
+    
+    
+    <script src="../src/js/jquery.layout.js"></script>
+
+  </head>
+  <body>
+    <div class="container">
+      
+      <div class="page-header">
+        <h1>jquery-layout <small>item-offset</small></h1>
+      </div>
+      
+      <section class="example example-1">
+        <h2>Example</h2>
+        <p>
+          <em>Providing a computed position offset.</em>
+        </p>
+        
+        <div class="chips chips-1">
+          <div class="chip c1" data-value="10"></div>
+          <div class="chip c2" data-value="10"></div>
+          <div class="chip c3" data-value="30"></div>
+          <div class="chip c4"></div>
+          <div class="chip c6" data-value="40"></div>
+          <div class="chip c7"></div>
+          <div class="chip c8" data-value="30"></div>
+          <div class="chip c5" data-value="20"></div>
+          <div class="chip c9" data-value="20"></div>
+          <div class="chip c10" data-value="10"></div>
+          <div class="chip c11" data-value="40"></div>
+        </div>
+        
+        <script>
+          
+          $(function() {
+            
+            function layout() {
+              $('.chips').layout({
+                textAlign: 'left', 
+                sort: 'value', 
+                stack: {sort: 'value', offset: {top: 10, left: 0}}, 
+                order: 'desc', 
+                columns: 0, 
+                style: 'absolute', 
+                item: {
+                  offset: function(index, length) {
+                    console.log("computed item-offset", index, length);
+                    var maxlength = 6;
+                    var result = {
+                      top: (index - maxlength - 1) * (index - maxlength - 1) * -2.25 + 110,  
+                      left: -3, 
+                    };
+                    return result;
+                  }
+                }
+              });
+            }
+            
+            $(".example-1 form").change(layout);
+            
+            layout();
+          
+          });
+          
+          
+        </script>
+      
+      </section>
+      
+    </div>
+    
+    
+  </body>
+</html>

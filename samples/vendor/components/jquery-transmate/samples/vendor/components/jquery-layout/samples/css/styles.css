@@ -1,0 +1,24 @@
+.example:after {
+  content: ".";
+  clear: both;
+  display: block;
+  visibility: hidden;
+  height: 0px;
+}
+
+section.example {
+  margin-bottom: 40px;
+}
+
+.inline-container {
+  margin: -2px;
+  font-size: 0;
+}
+
+.inline-item {
+  margin: 2px;
+  display: inline-block;
+  position: relative;
+  font-size: 1rem;
+}
+

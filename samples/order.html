@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>jquery-transmate | animated blocks</title>
+    <!-- example dependencies -->
+    <link rel="stylesheet" href="vendor/components/bootstrap/dist/css/bootstrap.css">
+    <script src="vendor/components/jquery/dist/jquery.js"></script>
+    
+    <script src="vendor/components/jquery-transmate/dist/js/jquery.transmate.js"></script>
+    
+    <script src="../src/js/jquery.layout.js"></script>
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/blocks.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/chips.css">
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>jquery.layout <small>advanced</small></h1>
+      </div>
+      
+      
+      <section class="example example-1">
+        
+        <h2>Example</h2>
+        <p>
+          <em>An interactive layout.</em>
+        </p>
+       
+        <div class="panel panel-default">
+          
+          <div class="panel-heading">
+            <div class="row">
+              <div class="col-md-8">
+                <form class="form form-inline">
+                  <div class="btn-group">
+                    <button id="shuffle" type="button" class="btn btn-default">Shuffle</button>
+                    <button id="reverse" type="button" class="btn btn-default">Reverse</button>
+                  </div>
+                  <select class="form-control" name="style" value="transform">
+                    <option>static</option>
+                    <option>absolute</option>
+                    <option>transform</option>
+                    <option>flex</option>
+                  </select>
+                  <select class="form-control" name="items" value="10">
+                    <option>10</option>
+                    <option>50</option>
+                    <option>100</option>
+                    <option>250</option>
+                  </select>
+                  <div class="btn-group">
+                    <a data-align-command="left" href="#" class="btn btn-default"><i class="glyphicon glyphicon-align-left"> </i></a>
+                    <a data-align-command="center" href="#" class="btn btn-default"><i class="glyphicon glyphicon-align-center"> </i></a>
+                    <a data-align-command="right" class="btn btn-default"><i class="glyphicon glyphicon-align-right"> </i></a>
+                  </div>
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" name="animated" checked> Animated
+                    </label>
+                  </div>
+                </form>
+              </div>
+              <div class="col-md-4">
+                <label class="pull-right"><span id="exec-time" class="label label-default"></span></label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="panel-body blocks">
+          </div>
+          
+          <div class="panel-footer">
+            
+          </div>
+            
+        </div>
+        
+        <style>
+          .blocks {
+            text-align: center;
+          }
+        </style>
+        <script>
+          $(function() {
+            
+            function shuffle(o) {
+              for( var j, x, i = o.length; i; j = Math.floor(Math.random() * i ), x = o[--i], o[i] = o[j], o[j] = x); return o;
+            };
+            
+            var items = [];
+            
+            function createItems(size) {
+              var html = "";
+              for (var i = 0; i < size; i++) {
+                html+= '<div class="block">' + i + '</div>';
+              }
+              items = $('.blocks').html(html).children().toArray();
+            }
+            
+            function layout(opts, animated) {
+              animated = typeof animated != 'undefined' ? animated : $("input[type='checkbox'][name='animated']:checked").length > 0;
+              if (animated) {
+                $('.blocks > .block').animate(function() {
+                  $('.blocks').layout(opts);
+                });
+              } else {
+                $('.blocks').layout(opts);
+              }
+            }
+                        
+            $('#shuffle').click(function(e) {
+              items = shuffle(items);
+              layout({
+                sort: items
+              });
+              e.preventDefault();
+            });
+            $('#reverse').click(function(e) {
+              items = items.reverse();
+              layout({
+                sort: items
+              });
+              e.preventDefault();
+            });
+            
+            $('a[data-align-command]').click(function(e) {
+              layout({
+                textAlign: $(this).data('align-command')
+              });
+              e.preventDefault();
+            });
+            
+            $("select[name='style']").change(function(e) {
+              layout({
+                style: $("select[name='style']").val()
+              });
+              e.preventDefault();
+            });
+            
+            $("select[name='items']").change(function(e) {
+              createItems(this.value);
+              layout();
+              e.preventDefault();
+            });
+            
+            createItems($("select[name='items']").val());
+            
+            $('.blocks').layout({
+              style: $("select[name='style']").val(), 
+              textAlign: 'left', 
+              item: '.block', 
+              /*columns: function(rowIndex) {
+                return rowIndex == 0 ? 2 : 5;
+              },*/
+              render: function() {
+                $('#exec-time').html(arguments[1] + " ms");
+              }
+            });
+            
+          });
+        </script>
+        
+      </section>
+      
+    </div>
+  </body>
+</html>

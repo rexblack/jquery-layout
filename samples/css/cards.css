@@ -2,18 +2,22 @@
   margin: 2px;
 }
 
-.card .block {
-  margin: 0;
+.cards {
+  margin: 2px;
+  text-align: center;
+}
+
+.cards .card {
+  margin: 2px;
 }
 
 .card {
   position: relative;
   width: 60px;
-  height: 60px;
+  height: 80px;
   -webkit-perspective: 600px;
   -moz-perspective: 600px;
   perspective: 600px;
-  margin: 2px;
 }
 
 .card > div {
@@ -62,4 +66,9 @@
   -webkit-transform: rotateY(180deg);
   -moz-transform: rotateY(180deg);
   transform: rotateY(180deg);
+}
+
+.card .block {
+  margin: 0;
+  line-height: 80px;
 }

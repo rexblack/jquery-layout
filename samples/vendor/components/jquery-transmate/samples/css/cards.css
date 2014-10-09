@@ -1,0 +1,69 @@
+.cards {
+  textAlign: center;
+}
+
+.blocks .card {
+  margin: 2px;
+}
+
+.card .block {
+  margin: 0;
+}
+
+.card {
+  position: relative;
+  width: 60px;
+  height: 100px;
+  -webkit-perspective: 600px;
+  -moz-perspective: 600px;
+  perspective: 600px;
+  margin: 2px;
+}
+
+.card > div {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  -webkit-transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-transition: -webkit-transform 0.4s ease-in-out;
+  -moz-transition: -webkit-transform 0.4s ease-in-out;
+  transition: transform 0.4s ease-in-out;
+}
+
+.card > div > .face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  
+  backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  
+  -webkit-transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+
+.card > div > .face.front {
+  -webkit-transform: rotateX(0deg) rotateY(0deg);
+  -moz-transform: rotateX(0deg) rotateY(0deg);
+  transform: rotateX(0deg) rotateY(0deg);
+}
+
+.card > div > .face.back {
+  -webkit-transform: rotateY(180deg);
+  -moz-transform: rotateY(-180deg); 
+  transform: rotateY(180deg);
+}
+
+.card.flipped > div {
+  -webkit-transform: rotateY(180deg);
+  -moz-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}

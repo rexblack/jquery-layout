@@ -1,0 +1,16 @@
+{
+  "name": "jquery-transmate",
+  "dependencies": {
+    "arian-css-matrix": "https://github.com/arian/CSSMatrix.git"
+  },
+  "homepage": "https://github.com/benignware/jquery-transmate",
+  "_release": "e7b1a5d2ca",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "e7b1a5d2caa3e3b4a64ce48d8ba022f4d66749bb"
+  },
+  "_source": "https://github.com/benignware/jquery-transmate.git",
+  "_target": "*",
+  "_originalSource": "https://github.com/benignware/jquery-transmate.git"
+}

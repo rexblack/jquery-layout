@@ -1,0 +1,130 @@
+.chip {
+  
+  display: inline-block;
+  list-style-type: none;
+  vertical-align: bottom;
+  background: linear-gradient(90deg, #cde 0%, #abc 100%);
+  
+  width: 60px;
+  height: 8px;
+  
+  position: relative;
+  
+  margin-left: 0;
+  margin-right: 0;
+  
+  margin-top: 8px;
+  margin-bottom: 8px;
+  z-index: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  
+  cursor: pointer;
+  
+  -webkit-backface-visibility: hidden;
+}
+
+.chip:before, .chip:after {
+  content: '';
+  width: 100%;
+  height: 8px;
+  border-radius: 50%;
+  display: block;
+  transform: rotateX(75deg);
+  -moz-transform: rotateX(75deg);
+  -webkit-transform: rotateX(75deg);
+  transform-origin: 50% 50%;
+  -moz-transform-origin: 50% 50%;
+  -webkit-transform-origin: 50% 50%;
+  transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  width: 60px;
+  height: 60px;
+}
+
+.chip:before {
+  background: linear-gradient(90deg, #def 0%, #abc 100%);
+  position: absolute;
+  top: -30px;
+  content: "";
+  color: black;
+  font-size: 22px;
+  font-weight: normal;
+  padding: 12px 3px;
+  text-align: center;
+  letter-spacing: 0px;
+  z-index: 1;
+}
+
+.chip:after {
+  position: absolute;
+  bottom: -30px;
+  background: linear-gradient(90deg, #cde 0%, #abc 100%);
+  z-index: -1;
+}
+
+
+/* values */
+
+/* red */
+.chip[data-value='10'] {
+   background: linear-gradient(90deg, #faa 0%, #d00 100%);
+}
+
+.chip[data-value='10']:before {
+  background: linear-gradient(90deg, #fdd 0%, #f00 100%);
+}
+
+.chip[data-value='10']:after {
+  background: linear-gradient(90deg, #faa 0%, #d00 100%);
+}
+
+/* blue */
+.chip[data-value='20'] {
+   background: linear-gradient(90deg, #aaf 0%, #00d 100%);
+}
+
+.chip[data-value='20']:before {
+  background: linear-gradient(90deg, #ddf 0%, #00f 100%);
+}
+
+.chip[data-value='20']:after {
+  background: linear-gradient(90deg, #aaf 0%, #00d 100%);
+}
+
+/* green */
+.chip[data-value='30'] {
+   background: linear-gradient(90deg, #6a6 0%, #050 100%);
+}
+
+.chip[data-value='30']:before {
+  background: linear-gradient(90deg, #8c8 0%, #080 100%);
+}
+
+.chip[data-value='30']:after {
+  background: linear-gradient(90deg, #6a6 0%, #050 100%);
+}
+
+/* violet */
+.chip[data-value='40'] {
+   background: linear-gradient(90deg, #F9D4F9 0%, #AA037B 100%);
+}
+
+.chip[data-value='40']:before {
+  background: linear-gradient(90deg, #FCECFC 0%, #A83788 100%);
+}
+
+.chip[data-value='40']:after {
+  background: linear-gradient(90deg, #F9D4F9 0%, #AA037B 100%);
+}
+
+.chips {
+  margin: -2px;
+  font-size: 0;
+  position: relative;
+}
+
+.chips .chip {
+  margin: 10px 2px 10px;
+}

@@ -77,14 +77,62 @@
     return originalHeight != contentHeight;
   }
   
-  var transformStyle = (function(prop, prefixes) {
-    var elem = document.createElement('div');
-    var capitalized = prop.charAt(0).toUpperCase() + prop.slice(1);
-    for (var i = 0; i < prefixes.length; i++) if (typeof elem.style[prefixes[i] + capitalized] != "undefined") return prefixes[i] + capitalized;
-    return null;
-  })('transform', ['', 'Moz', 'Webkit', 'O', 'Ms']);
+  
+  function camelize(string) {
+    return string.replace(/(\-[a-z])/g, function($1){return $1.toUpperCase().replace('-','');});
+  }
+  
+  function hyphenate(string) {
+    return string.replace(/([A-Z])/g, function($1){return "-"+$1.toLowerCase();});
+  }
+  
+  // retrieves a the vendor prefixed style name for the given property
+  var getVendorStyle = (function() {
+    var cache = {};
+    var vendorPrefixes = ['Webkit', 'Moz', 'O', 'Ms'], elem = document.createElement('div');
+    return function (styleName, hyphenated) {
+      var camelized = camelize(styleName);
+      hyphenated = typeof hyphenated == 'boolean' ? hyphenated : false;
+      var result = cache[camelized] = typeof cache[camelized] != 'undefined' ? cache[camelized] : (function(camelized) {
+        var result = null;
+        document.documentElement.appendChild(elem);
+        if (typeof (elem.style[camelized]) == 'string') result = camelized;
+        if (!result) {
+          var capitalized = camelized.substring(0, 1).toUpperCase() + camelized.substring(1);
+          for (var i = 0; i < vendorPrefixes.length; i++) {
+            var prop = vendorPrefixes[i] + capitalized;
+            if (typeof elem.style[prop] == 'string') {
+              result = prop;
+              break;
+            }
+          }
+        }
+        elem.parentNode.removeChild(elem);
+        return result;
+      })(camelized);
+      if (result && hyphenated) {
+        result = hyphenate(result);
+      }
+      return result;
+    };
+  })();
+  
+  var isStyleSupported = function(prop) {
+    return typeof getVendorStyle(prop) != 'undefined'; 
+  };
+  
+  var isFlexSupported = (function() {
+    var cache;
+    return function() {
+      return typeof cache != 'undefined' ? cache : cache = (function() {
+        var elem = document.createElement('div');
+        elem.style.display = "flex";
+        return elem.style.display === 'flex';
+      })();
+    };
+  })();
 
-  function parseAlign(string, priorities) {
+  function parseAlign(string, priorities, def) {
     priorities = priorities instanceof Array ? priorities : ['left', 'top'];
     var result = {};
     if (typeof string == 'number') {
@@ -122,6 +170,8 @@
         }
       }
     }
+    result.left = typeof def != 'undefined' && typeof result.left == 'undefined' ? def : result.left;
+    result.top = typeof def != 'undefined' && typeof result.top == 'undefined' ? def : result.top;
     return result;
   }
         
@@ -155,11 +205,14 @@
   function optionPrefilter(options) {
     var opts = $.extend({}, options, {
       // override
-      align: $.extend({left: 0, top: 0}, parseAlign(options.align), parseAlign(options.textAlign, ['left']), parseAlign(options.verticalAlign, ['top'])), 
+      align: $.extend({}, parseAlign(options.align), parseAlign(options.textAlign, ['left']), parseAlign(options.verticalAlign, ['top'])), 
       style: (function(style) {
-        if (style == 'transform' && !transformStyle) {
-          return 'absolute';
-        };
+        if (typeof style == 'string') {
+          style = style.split(/\s+/);
+        }
+        $.grep(style, function(style, index) {
+          return $.inArray(style, styles) >= 0;
+        });
         return style;
       })(options.style), 
       sort: sortPrefilter.call(this, options.sort), 
@@ -200,6 +253,20 @@
     return opts;
   }
   
+  function runtimePrefilter(opts) {
+    // align
+    opts.align = opts.align || {};
+    opts.align.left = typeof opts.align.left != 'undefined' && opts.align.left != 'auto' ? opts.align.left : parseAlign(this.css('textAlign'), ['left'], 0).left;
+    opts.align.top = typeof opts.align.top != 'undefined' && opts.align.top != 'auto' ? opts.align.top : parseAlign(this.css('verticalAlign'), ['top'], 0).top;
+    // gutter
+    opts.gutter = opts.gutter || {};
+    opts.gutter.left = typeof opts.gutter.left != 'undefined' && opts.gutter.left != 'auto' ? opts.gutter.left : parseFloat(this.css('marginLeft'));
+    opts.gutter.top = typeof opts.gutter.top != 'undefined' && opts.gutter.top != 'auto'  ? opts.gutter.top : parseFloat(this.css('marginTop'));
+    opts.gutter.right = typeof opts.gutter.right != 'undefined' && opts.gutter.right != 'auto'  ? opts.gutter.right : parseFloat(this.css('marginRight'));
+    opts.gutter.bottom = typeof opts.gutter.bottom != 'undefined' && opts.gutter.bottom != 'auto'  ? opts.gutter.bottom : parseFloat(this.css('marginBottom'));
+    return opts;
+  }
+  
   var pluginName = "layout";
   var defaults = {
     align: 'left top', 
@@ -214,12 +281,40 @@
     }
   };
   
+  
+  // setup styles
+  var styles = (function(styles) {
+    return $.grep(styles, function(style, index) {
+      if (style == 'transform' && !getVendorStyle('transform')) {
+        return false;
+      }
+      if (style == 'flex' && !isFlexSupported()) {
+        return false;
+      }
+      return true;
+    });
+  })(['flex', 'transform', 'absolute', 'static']);
+  
   function Layout(elem, options) {
     
     var instance = this, $elem = $(elem);
     this.elem = elem;
+    var transformStyle = getVendorStyle('transform');
     
     var elems = [], elemDatas = [];
+    
+    // get restore data
+    var restore = {
+      css: {
+        fontSize: elem.style.fontSize, 
+        textAlign: elem.style.textAlign, 
+        verticalAlign: elem.style.verticalAlign, 
+      }, 
+      wrappers: []
+    };
+    // flex
+    restore.css[getVendorStyle('flex-wrap')] = elem.style[getVendorStyle('flex-wrap')];
+    restore.css[getVendorStyle('align-items')] = elem.style[getVendorStyle('align-items')];
     
     function resizeHandler(e) {
       instance.render();
@@ -227,172 +322,182 @@
     
     this.render = function(options) {
       
+      // measure time
+      var startTime = new Date().getTime();
+      
+      // reset styles
+      $(parent).css(restore.css);
+      
       // options
-      var opts = optionPrefilter.call(this, this.options = $.extend({}, defaults, this && this.options, options));
+      this.options = $.extend({}, defaults, this && this.options, options);
+      
+      var opts = this.options;
+      
+      // option prefilter
+      opts = optionPrefilter.call($elem, opts);
+      
+      // find and sort elems
+      var items = $elem.find(opts.item.selector).not("br").toArray();
+      
+      items.sort(opts.sort);
+      
+      // runtime prefilter
+      opts = runtimePrefilter.call($elem, opts);
       
       // resize handler
       $(window).off('resize', resizeHandler);
       if (opts.bindResize) {
         $(window).on('resize', resizeHandler);
       }
-      
-      // find and sort elems
-      var items = $elem.find(opts.item.selector).toArray(), elemDatas = []; 
-      items.sort(opts.sort);
-      
-      elems = $.grep(items, function(elem, index) {
-        return $(elem).is(":visible");
-      });
-      
+
       var 
+        style = opts.style[0], 
+        elems = $.grep(items, function(elem, index) {
+          return $(elem).is(":visible");
+        }), 
+        elemDatas = [], 
         parent = this.elem, 
-        $parent = $elem, 
-        parentWidth = $parent.innerWidth(), 
-        parentHeight = $parent.innerHeight(), 
-        totalWidth = 0, 
-        totalHeight = 0; 
-         
-      
-      // setup data
+        $parent = $elem;
+        
+        
       var 
-        currentSet = {elems: [], left: 0, top: 0, width: 0, height: 0}, 
-        sets = [currentSet], 
-        rows = [{width: 0, height: 0, sets: [currentSet]}], 
+        parentWidth = $parent.innerWidth(), 
+        parentHeight = $parent.innerHeight(),
+        parentPadding = {
+          left: parseFloat($parent.css('paddingLeft')), 
+          top: parseFloat($parent.css('paddingTop')), 
+          right: parseFloat($parent.css('paddingRight')),
+          bottom: parseFloat($parent.css('paddingBottom'))
+        }, 
+        parentContentWidth = parentWidth - parentPadding.left - parentPadding.right, 
+        parentContentHeight = parentHeight - parentPadding.top - parentPadding.bottom, 
+        contentWidth = 0, 
+        contentHeight = 0, 
+        totalWidth = parentPadding.left + parentPadding.right, 
+        totalHeight = parentPadding.top + parentPadding.bottom; 
+      
+      // setup item data
+      var 
+        currentColumn = {elems: [], left: 0, top: 0, width: 0, height: 0}, 
+        rows = [{width: 0, height: 0, columns: [currentColumn], elems: []}], 
         currentRow = rows[0], 
         columnCount = typeof opts.columns == 'function' ? opts.columns.call(this, 0) : opts.columns, 
         currentWidth = 0;
       
       $(elems).each(function(index, elem) {
         var $elem = $(elem);
-        $elem.css({
-          position: 'relative', 
-          left: "", 
-          top: "", 
-        });
-        if (transformStyle) {
-          $elem.css(transformStyle, "");
-        }
         var nextElem = elems[index + 1];
         var elemWidth = $elem.outerWidth(true);
         var elemHeight = $elem.outerHeight(true);
         var elemData = {
+          elem: elem, 
           width: elemWidth, 
-          height: elemHeight,   
-          elem: this
+          height: elemHeight  
         };
         elemDatas.push(elemData);
-        
-        currentSet.elems.push(elemData);
-        currentSet.width = Math.max(currentSet.width, elemWidth);
-        
-        var newRow = false;
+        currentColumn.elems.push(elemData);
+        currentColumn.width = Math.max(currentColumn.width, elemWidth);
+        currentRow.elems.push(elem);
         var sort = opts.stack && opts.stack.sort ? opts.stack.sort : opts.sort;
-        var newSet = !opts.stack && index < elems.length - 1 || sort && (sort.call(elems, elem, nextElem) != 0);
-        
-        if (newSet) {
-          
-          newRow = index > 0 && (columnCount > 0 && currentRow.sets.length + 1 > columnCount || columnCount == 0 && currentSet.left + currentSet.width + elemWidth >= parentWidth); 
-          
+        var newRow = false;
+        var newColumn = !opts.stack && index < elems.length - 1 || sort && (sort.call(elems, elem, nextElem) != 0);
+        if (newColumn) {
+          var isBreak = index > 0 && (columnCount > 0 && currentRow.columns.length + 1 > columnCount); 
+          var isWrap = index < elems.length - 1 && currentColumn.left + currentColumn.width + elemWidth >= parentWidth;
+          currentRow.isBreak = currentColumn.isBreak = isBreak;
+          currentRow.isWrap = currentColumn.isWrap = isWrap;
+          newRow = isBreak || isWrap;
           if (newRow) {
             // new row
             currentRow = {
               width: 0, 
               height: 0, 
-              sets: []
+              elems: [], 
+              columns: []
             };
             rows.push(currentRow);
             columnCount = typeof opts.columns == 'function' ? opts.columns.call(this, rows.length - 1) : opts.columns;
           }
         }
-        
-        if (newSet && index < elems.length - 1) {
-          // new set
-          currentSet = {
+        if (newColumn && index < elems.length - 1) {
+          // new column
+          currentColumn = {
             width: elemWidth, 
             height: 0, 
-            left: newRow ? 0 : currentSet.left + currentSet.width,
-            top: totalHeight, 
+            left: newRow ? 0 : currentColumn.left + currentColumn.width,
+            top: contentHeight, 
             elems: []
           };
-          sets.push(currentSet);
-          currentRow.sets.push(currentSet);
+          currentRow.columns.push(currentColumn);
         }
-        
-        currentRow.width = currentSet.left + currentSet.width;
+        currentRow.width = currentColumn.left + currentColumn.width;
       });
         
-      
+      // setup heights
       for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
-        
         row.height = 0;
-        
-        for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
-          
-          set.offset = typeof opts.item.offset == 'function' ? opts.item.offset.call($(set.elems), setIndex, row.sets.length) : {top: opts.item.offset.top * setIndex, left: opts.item.offset.left * setIndex};
-
+        for (var columnIndex = 0, column; column = row.columns[columnIndex]; columnIndex++) {
+          column.offset = typeof opts.item.offset == 'function' ? opts.item.offset.call($(column.elems), columnIndex, row.columns.length) : {top: opts.item.offset.top * columnIndex, left: opts.item.offset.left * columnIndex};
           var offset = {
             left: 0, 
             top: 0
           };
-          
-          for (var stackIndex = 0, elemData; elemData = set.elems[stackIndex]; stackIndex++) {
-            
+          for (var stackIndex = 0, elemData; elemData = column.elems[stackIndex]; stackIndex++) {
             var elem = elemData.elem;
             var elemWidth = elemData.height;
             var elemHeight = elemData.height;
-            
             var computedOffset = opts.stack && typeof opts.stack.offset == 'function';
             offset = computedOffset ? opts.stack.offset.call(elem, stackIndex, elems.length, offset) : offset;
-
             elemData.offset = {
               left: offset.left, 
               top: offset.top
             };
-            
             if (!computedOffset) {
               offset.top+= $(elem).height();
             }
-            
           }
-          
           // sort after position
-          set.elems.sort(function(a, b) {
+          column.elems.sort(function(a, b) {
             return a.offset.top - b.offset.top;
           });
-          
-          set.height =  set.elems.length > 0 ? set.elems[set.elems.length - 1].offset.top + set.elems[set.elems.length - 1].height : 0;
-          row.height = Math.max(row.height, set.height);
-          
-          set.top = totalHeight;
+          column.height =  column.elems.length > 0 ? column.elems[column.elems.length - 1].offset.top + column.elems[column.elems.length - 1].height : 0;
+          row.height = Math.max(row.height, column.height);
+          column.top = contentHeight;
         }
-        totalHeight+= row.height;
+        contentHeight+= row.height;
       }
       
       // setup coords
-      
       for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
-        for (var setIndex = 0, set; set = row.sets[setIndex]; setIndex++) {
-          for (var stackIndex = 0, elemData; elemData = set.elems[stackIndex]; stackIndex++) {
+        for (var columnIndex = 0, column; column = row.columns[columnIndex]; columnIndex++) {
+          for (var stackIndex = 0, elemData; elemData = column.elems[stackIndex]; stackIndex++) {
 
             var elem = elemData.elem;
             var elemWidth = elemData.height;
             var elemHeight = elemData.height;
             
-            var ha = (parentWidth >= 0 ? Math.max((parentWidth - row.width) * opts.align.left, 0) : 0);
-            var va = (parentHeight >= 0 ? Math.max((parentHeight - totalHeight) * opts.align.top, 0) : 0);
+            var ha = (parentContentWidth >= 0 ? Math.max((parentContentWidth - row.width) * opts.align.left, 0) : 0);
+            var va = (parentContentHeight >= 0 ? Math.max((parentContentHeight - contentHeight) * opts.align.top, 0) : 0);
             
-            var left = ha + set.left;
-            var top = va + set.top;
+            var left = parentPadding.left;
+            var top = parentPadding.top;
             
-            left+= set.offset.left;
-            top+= set.offset.top;
+            left+= ha + column.left;
+            top+= va + column.top;
+            
+            left+= column.offset.left;
+            top+= column.offset.top;
             
             if (opts.stack) {
-              top+= (row.height - set.height) * (opts.stack.align.top ? opts.stack.align.top : 0);
+              top+= (row.height - column.height) * (opts.stack.align.top ? opts.stack.align.top : 0);
             } 
             
+            elemData.row = row;
+            elemData.rowIndex = rowIndex;
+            
+            elemData.column = column;
+            elemData.columnIndex = columnIndex;
             elemData.stackIndex = stackIndex;
-            elemData.set = set;
             
             left+= elemData.offset.left;
             top+= elemData.offset.top;
@@ -400,60 +505,207 @@
             elemData.left = left;
             elemData.top = top;
             
+            elemData.isBreak = stackIndex == column.elems.length - 1 ? column.isBreak : false;
+            elemData.isWrap = stackIndex == column.elems.length - 1 ? column.isWrap : false;
           }
         }
       }
+      totalHeight+= contentHeight;
       
       // sort by positions and stack-index
       elemDatas.sort(function(a, b) {
-        var pos = (a.set.top - b.set.top) * (a.set.left - b.set.left);
+        var pos = (a.column.top - b.column.top) * (a.column.left - b.column.left);
         if (pos == 0) {
           return a.stackIndex - b.stackIndex;
         }
       });
       
       // update elems
-      elems = $.map(elemDatas, function(index, elemData) {
+      elems = $.map(elemDatas, function(elemData, index) {
         return elemData.elem;
       });
       
+      // setup elems
+      var $elemDatas = $(elemDatas);
       
-      // render elems
-      $(elemDatas).each(function(index, elemData) {
+      if (style == 'absolute') {
         
-        var left = elemData.left;
-        var top = elemData.top;
-        var zIndex = elemDatas.length - index;
+        // absolute
         
-        var css = {};
-        
-        if (opts.style == 'transform') {
-          // transform
-          css[transformStyle] = 'translate(' + left + "px, " + top + "px)";
-          css.position = 'absolute';
-          css.zIndex = zIndex;
-        } else if (opts.style == 'absolute') {
-          // absolute
-          css.position = 'absolute';
-          css.left = left + "px";
-          css.top = top + "px";
-          css.zIndex = zIndex;
-        } else {
-          // static
+        $elemDatas.each(function(index, elemData) {
           
+          var css = {
+            position: 'absolute', 
+            left: elemData.left + "px", 
+            top: elemData.top + "px", 
+            zIndex: elemData.stackIndex, 
+            display: 'block'
+          };
+          css[transformStyle] = '';
+          
+          $(elemData.elem).css(css);
+        
+        });
+        
+        
+      } else if (style == 'transform') {
+        
+        // transform
+        
+        $elemDatas.each(function(index, elemData) {
+          
+          var css = {
+            position: 'absolute', 
+            left: "0px", 
+            top: "0px", 
+            zIndex: elemData.stackIndex,
+            display: 'block', 
+            fontSize: ''
+          };
+          css[transformStyle] = "translate(" + elemData.left + "px, " + elemData.top + "px)";
+          
+          $(elemData.elem).css(css);
+        
+        });
+      
+      } else if (style == 'static') {
+        
+        // static
+        
+        $parent.css('font-size', '');
+        var parentFontSize = $parent.css('font-size');
+        
+        // readd ordered items
+        if (opts.sort) {
+          $parent.append(elems);
         }
         
-        $(elemData.elem).css(css);
-        
-      });
-      
-      if (isAutoHeight(parent)) {
-        $parent.css({
-          height: totalHeight, 
-          position: 'relative'
+        $elemDatas.each(function(index, elemData) {
+          
+          var css = {
+            position: 'static', 
+            display: 'inline-block', 
+          };
+          var fontSize = $(elem).css('fontSize');
+          if (fontSize == parentFontSize) {
+            css.fontSize = parentFontSize;
+          }
+          css[transformStyle] = '';
+          $(elemData.elem).css(css);
+          
         });
+        
+      } else if (style == 'flex') {
+        
+        // flex
+        
+        $elemDatas.each(function(index, elemData) {
+          
+          var css = {
+            position: 'static', 
+            display: 'block', 
+            fontSize: ''
+          };
+          css[getVendorStyle('order')] = index;
+          css[transformStyle] = '';
+          $(elemData.elem).css(css);
+          
+        });
+        
       }
       
+      
+      // parent
+      
+      // restore
+      var css = {
+        position: '', 
+        height: '', 
+        textAlign: '', 
+        verticalAlign: '', 
+        display: '', 
+        fontSize: ''
+      };
+      
+      css[getVendorStyle('flex-wrap')] = '';
+      css[getVendorStyle('justify-content')] = '';
+      css[getVendorStyle('flex-direction')] = '';
+      
+      if (style == 'absolute' || style == 'transform') {
+        
+        // auto-height
+        if (isAutoHeight(parent)) {
+          css.height = totalHeight;
+        }
+        
+      }
+      
+      if (style == 'static' || style == 'flex') {
+        
+        css.fontSize = "0";
+        css.textAlign = opts.align.left == 0.5 ? 'center' : opts.align.left == 1 ? 'right' : 'left';
+        css.verticalAlign = opts.align.top == 0.5 ? 'middle' : opts.align.top == 1 ? 'bottom' : 'bottom';
+        css.height = "auto";
+        
+        // setup breaks
+        var wrappers = restore.wrappers = (function(old) {
+          var elemsToWrap = [], wrappers = [];
+          for (var index = 0, elemData; elemData = elemDatas[index]; index++) {
+            elemsToWrap.push(elemData.elem);
+            if (elemData.isBreak || wrappers.length && index == elemDatas.length - 1) {
+              // create container
+              var wrapper = old[i] || document.createElement('div');
+              $(wrapper).append(elemsToWrap);
+              wrappers.push(wrapper);
+              elemsToWrap = [];;
+            }
+          }
+          for (var i = wrappers.length; i < old.length; i++) {
+            // remove unneeded
+            $(old[i]).remove();
+          }
+          return wrappers;
+        })(restore.wrappers);
+        
+        if (style == 'flex') {
+          
+          var flexCss = {};
+          flexCss.display = "flex";
+          flexCss[getVendorStyle('flex-wrap')] = 'wrap';
+          flexCss[getVendorStyle('justify-content')] = opts.align.left == 0.5 ? 'center' : opts.align.left == 1 ? 'flex-end' : 'flex-start';
+          flexCss[getVendorStyle('flex-direction')] = 'row';
+          
+          if (wrappers.length) {
+            $.each(wrappers, function(index, elem) {
+              $(elem).css(flexCss);
+            });
+          } else {
+            $.extend(css, flexCss);
+          }
+        }
+        
+        $parent.append(wrappers);
+        
+        
+      } else {
+        
+        // remove wrappers
+        $(restore.wrappers).each(function() {
+          $(this).remove();
+        });
+        restore.wrappers = [];
+        $parent.append(elems);
+      }
+      
+      $parent.css(css);
+      
+      var execTime = new Date().getTime() - startTime;
+      
+      // callback
+      if (typeof opts.render == 'function') {
+        opts.render.call($parent, opts, execTime);
+      }
+        
     };
     
     this.render(options);

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>jquery-transmate | animated blocks</title>
+    <!-- example dependencies -->
+    <link rel="stylesheet" href="vendor/components/bootstrap/dist/css/bootstrap.css">
+    <script src="vendor/components/jquery/jquery.js"></script>
+    
+    <script src="../src/js/jquery.layout.js"></script>
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/blocks.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/chips.css">
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>jquery.layout <small>advanced</small></h1>
+      </div>
+      
+      
+      <section class="example example-1">
+        
+        <h2>Example</h2>
+        <p>
+          <em>An interactive layout.</em>
+        </p>
+       
+        <div class="panel panel-default">
+          
+          <div class="panel-heading">
+            <h4 class="panel-title">Balance <span class="label label-default label-balance">100</span></h4>
+          </div>
+          <div class="panel-body cards">
+              <div class="card">
+                <div>
+                  <div class="face front block">1</div>
+                  <div class="face back block">Back</div>
+                </div>
+              </div>
+              <div class="card">
+                <div>
+                  <div class="face front block">2</div>
+                  <div class="face back block">Back</div>
+                </div>
+              </div>
+              <div class="card">
+                <div>
+                  <div class="face front block">3</div>
+                  <div class="face back block">Back</div>
+                </div>
+              </div>
+              <div class="card">
+                <div>
+                  <div class="face front block">4</div>
+                  <div class="face back block">Back</div>
+                </div>
+              </div>
+              <div class="card">
+                <div>
+                  <div class="face front block">5</div>
+                  <div class="face back block">Back</div>
+                </div>
+              </div>
+              <div class="card">
+                <div>
+                  <div class="face front block">6</div>
+                  <div class="face back block">Back</div>
+                </div>
+              </div>
+              <div class="card">
+                <div>
+                  <div class="face front block">7</div>
+                  <div class="face back block">Back</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="panel-footer">
+              <div class="row">
+                <div class="col-md-8">
+                  <form class="form form-inline">
+                    <div class="btn-group">
+                      <button id="shuffle" type="button" class="btn btn-default">Shuffle</button>
+                      <button id="reverse" type="button" class="btn btn-default">Reverse</button>
+                    </div>
+                    <select class="form-control" name="style" value="transform">
+                      <option>static</option>
+                      <option>absolute</option>
+                      <option>transform</option>
+                      <option>flex</option>
+                    </select>
+                  </form>
+                </div>
+                <div class="col-md-4">
+                  <label class="pull-right"><span id="exec-time" class="label label-default"></span></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <style>
+          
+        </style>
+        <script>
+          $(function() {
+            
+            function shuffle(o) {
+              for( var j, x, i = o.length; i; j = Math.floor(Math.random() * i ), x = o[--i], o[i] = o[j], o[j] = x); return o;
+            };
+            
+            var cards = $('.cards > .card').toArray();
+            
+            $('.cards').layout({
+              style: $("select[name='style']").val(), 
+              item: '.card', 
+              columns: function(rowIndex) {
+                return rowIndex == 0 ? 2 : 5;
+              },
+              render: function() {
+                $('#exec-time').html(arguments[1] + " ms");
+              }
+            });
+            
+            console.log("hello");
+            $('#shuffle').click(function() {
+              cards = shuffle(cards);
+              $('.cards').layout({
+                sort: cards
+              });
+            });
+            $('#reverse').click(function() {
+              cards = cards.reverse();
+              $('.cards').layout({
+                sort: cards
+              });
+            });
+            
+            $("select[name='style']").change(function() {
+              $('.cards').layout({
+                style: $("select[name='style']").val()
+              });
+            });
+            
+            
+          });
+        </script>
+        
+      </section>
+      
+    </div>
+  </body>
+</html>

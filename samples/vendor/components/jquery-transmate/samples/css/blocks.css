@@ -1,0 +1,59 @@
+.blocks {
+  position: relative;
+  margin: -2px;
+}
+
+.blocks:before,
+.blocks:after {
+    content:"";
+    display:table;
+}
+.blocks:after {
+    clear:both;
+}
+.blocks {
+   zoom:1; /* For IE 6/7 (trigger hasLayout) */
+   clear: both;
+   /*text-align: center;*/
+   font-size: 0;
+   margin-bottom: 2px;
+   overflow: visible !important;
+}
+
+.blocks .block, 
+.blocks .card {
+  /*float: left;*/
+  display: inline-block;
+}
+
+.block {
+  position: relative;
+  background-color: #abc;
+  left: 0px;
+  top: auto;
+  width: 60px;
+  height: 60px;
+  border: 1px solid #12a;
+  text-align: center;
+  vertical-align: middle;
+  line-height: 56px;
+  margin-top: 2px;
+  margin-bottom: 4px;
+  font-size: 16px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+}
+
+.block.big {
+  width: 100px;
+  height: 100px;
+  line-height: 96px;
+}
+
+.blocks .block {
+  margin: 2px;
+}

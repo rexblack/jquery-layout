@@ -1,0 +1,8 @@
+{
+  "name": "jquery-layout-samples",
+  "version": "0.0.1",
+  "dependencies": {
+    "jquery": "", 
+    "bootstrap": "~3.2.0"
+  }
+}

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>jquery-transmate | animated blocks</title>
+    <!-- example dependencies -->
+    <link rel="stylesheet" href="vendor/components/bootstrap/dist/css/bootstrap.css">
+    <script src="vendor/components/jquery/jquery.js"></script>
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/blocks.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/chips.css">
+    
+    <script src="js/jquery.shuffle.js"></script>
+    <script src="js/jquery.layout.js"></script>
+    
+    <script src="../src/vendor/components/arian-css-matrix/CSSMatrix.js"></script>
+    <!--<script src="../src/js/jquery.fx.step-transform.js"></script>
+    <script src="../src/js/jquery.fx.tweener-transitions.js"></script>-->
+    <script src="../src/js/jquery.transmate-blocks.js"></script>
+    <!--
+    <script src="../dist/js/jquery.transmate.js"></script>
+    -->
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>jquery.transmate <small>animation blocks</small></h1>
+      </div>
+      
+      
+      <div class="example example-blocks-1">
+        <h3>Example 1</h3>
+        <p><em>Animate inline styles.</em></p>
+        <div class="form-group">
+          <button class="go btn btn-default">Run</button>
+        </div>
+        <div id="block-1" class="block">1</div>
+        <script>
+          $( ".example-blocks-1 .go" ).click(function() {
+            $('.example-blocks-1 .block').animate(function() {
+              $(this).css({
+                width: 100, 
+                height: 100, 
+                lineHeight: "96px"
+              }, 1000);
+            });
+          });
+        </script>
+      </div>
+      
+      <div class="example example-blocks-2">
+        <h3>Example 2</h3>
+        <p><em>Animate class styles.</em></p>
+        <form class="form-inline form-group" role="form">
+          <button class="go btn btn-default" type="button">Toggle class</button>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="queue" checked> Queue
+            </label>
+          </div>
+        </form>
+        <div id="block-1" class="block">1</div>
+        <script>
+          $( ".example-blocks-2 .go" ).click(function() {
+            $('.example-blocks-2 .block').animate(function() {
+              $(this).toggleClass('big');
+            }, {
+              queue: $(".example-blocks-2 input[name='queue']:checked").length == true,  
+              duration: 1000, 
+              cssTransitions: true, 
+              complete: function() {
+                console.log("DONE!");
+              }
+            });
+          });
+        </script>
+      </div>
+      
+      
+      <div class="example example-blocks-3">
+        <h3>Example 3</h3>
+        <p><em>Animate class styles.</em></p>
+        <form class="form-inline form-group" role="form">
+          <button class="go btn btn-default" type="button">Run</button>
+        </form>
+        <div class="blocks">
+          <div class="card">
+            <div>
+              <div class="face front block">1</div>
+              <div class="face back block">Back</div>
+            </div>
+          </div>
+          <div class="card">
+            <div>
+              <div class="face front block">2</div>
+              <div class="face back block">Back</div>
+            </div>
+          </div>
+          <div class="card">
+            <div>
+              <div class="face front block">3</div>
+              <div class="face back block">Back</div>
+            </div>
+          </div>
+          <div class="card">
+            <div>
+              <div class="face front block">4</div>
+              <div class="face back block">Back</div>
+            </div>
+          </div>
+          <div class="card">
+            <div>
+              <div class="face front block">5</div>
+              <div class="face back block">Back</div>
+            </div>
+          </div>
+        </div>
+        <script>
+          $('.example-blocks-3 .card').click(function() {
+            $(this).toggleClass('flipped');
+          });
+          var cc = 0;
+          $( ".example-blocks-3 .go" ).click(function() {
+            if (cc > 1) {
+              // only do it once
+              return;
+            }
+            cc++;
+            $('.example-blocks-3 .card').not(':animated').each(function(index) {
+              $(this).delay(index * 200).animate(function() {
+                $(this).toggleClass('flipped');
+              }, {
+                cssTransitions: true, 
+                complete: function() {
+                  console.log("----");
+                }
+              });
+            }).promise().done(function() {
+              console.log("done.", this);
+              $(this).fadeOut();
+            });
+            
+          });
+        </script>
+      </div>
+      
+      <section class="example example-4">
+        <h3>Example 4</h3>
+        <p><em>Add and remove elements to/from the dom.</em></p>
+        <form class="form-inline form-group" role="form">
+          <div class="btn-group">
+            <button class="add btn btn-default" type="button">Add</button>
+            <button class="remove btn btn-default" type="button">Remove</button>
+          </div>
+        </form>
+         <div class="blocks" style="max-width: 360px"></div>
+        <script>
+          var elems = [];
+          for (var c = 1; c <= 20; c++) {
+            elems.push($('<div class="block block-' + c + '">' + c + '</div>')[0]);
+          }
+          var $target = $('.example-4 .blocks').add($(elems));
+          $( ".example-4 .add" ).click(function() {
+            $target.animate(function() {
+              var elem = elems.shift();
+              $('.example-4 .blocks').append(elem);
+            });
+          });
+          $( ".example-4 .remove" ).click(function() {
+            $target.animate(function() {
+              var elem = $('.example-4 .blocks').children().last()[0];
+              $(elem).remove();
+              elems.unshift(elem);
+            }).promise().done(function() {
+              console.log("done.");
+            });
+          });
+        </script>
+      </section>
+    
+      <div class="example example-blocks-4">
+        <h3>Example 3</h3>
+        <p><em>Click button to shuffle dom order animated.</em></p>
+        <form class="form-inline form-group" role="form">
+          <button class="go btn btn-default" type="button">Run</button>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="queue" checked> Queue
+            </label>
+          </div>
+        </form>
+        <div id="blocks" class="blocks">
+          <div id="block1" class="block">1</div>
+          <div id="block2" class="block">2</div>
+          <div id="block3" class="block">3</div>
+          <div id="block4" class="block">4</div>
+          <div id="block5" class="block">5</div>
+        </div>
+        <script>
+          function shuffle(o) {
+            for( var j, x, i = o.length; i; j = Math.floor(Math.random() * i ), x = o[--i], o[i] = o[j], o[j] = x); return o;
+          };
+          $( ".example-blocks-4 .go" ).click(function() {
+            $('.example-blocks-4 .block').animate(function() {
+              $blocks = $('.example-blocks-4 .blocks');
+              //$blocks.append(shuffle($blocks.children()));
+              $blocks.append($blocks.children().first());
+              $blocks.append($blocks.children().toArray().slice(1).reverse());
+            }, {
+              queue: $(".example-blocks-4 input[name='queue']:checked").length == true,  
+              cssTransitions: true, 
+              duration: 600, 
+            }).promise().always(function() {
+              console.log("done.");
+            });
+          });
+        </script>
+      </div>
+      
+      
+      <div class="example example-blocks-5">
+        <h3>Example 4</h3>
+        <p><em>Click items to switch their parent containers.</em></p>
+        <form class="form-inline form-group" role="form">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="queue" checked> Queue
+            </label>
+          </div>
+        </form>
+        <div id="blocks-1" class="blocks">
+          <div id="block1" class="block">1</div>
+          <div id="block2" class="block">2</div>
+        </div>
+        <div id="blocks-2" class="blocks">
+          <div id="block3" class="block">3</div>
+          <div id="block4" class="block">4</div>
+          <div id="block4" class="block">5</div>
+        </div>
+        <script>
+          $( ".example-blocks-5 .block" ).click(function() {
+            console.log("CLICK");
+            var $item = $(this);
+            $('.example-blocks-5 .block').animate(function() {
+              ($item.parent().is($('#blocks-1')) ? $('#blocks-2') : $('#blocks-1')).append($item);
+              //$item.toggleClass('big');
+            }, {
+              cssTransitions: true, 
+              queue: $(".example-blocks-5 input[name='queue']:checked").length == true, 
+            }).promise().done(function() {
+              console.log("done.");
+            });
+          });
+        </script>
+      </div>
+      
+    </div>
+  </body>
+</html>

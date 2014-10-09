@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>jquery-transmate | animated blocks</title>
+    <!-- example dependencies -->
+    <link rel="stylesheet" href="vendor/components/bootstrap/dist/css/bootstrap.css">
+    <script src="vendor/components/jquery/jquery.js"></script>
+    
+    <script src="vendor/components/jquery-layout/src/js/jquery.layout.js"></script>
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/blocks.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/chips.css">
+    
+    <script src="../dist/js/jquery.transmate.js"></script>
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>jquery.transmate <small>layouts</small></h1>
+      </div>
+      
+      
+      <section class="example example-2">
+        
+        <h2>Example 2</h2>
+        <p>
+          <em>Absolute layout using jquery.aligned-plugin</em>
+        </p>
+        
+        <form class="form-inline form-group" role="form">
+          <div class="btn-group">
+            <button class="go btn btn-default" type="button"><i class="glyphicon glyphicon-play"> </i></button>
+          </div>
+        </form>
+        
+        <div class="chips chips-bet">
+        </div>
+        <div class="chips chips-balance">
+          <div class="chip c1" data-value="10"></div>
+          <div class="chip c2" data-value="10"></div>
+          <div class="chip c3" data-value="30"></div>
+          <div class="chip c4"></div>
+          <div class="chip c6" data-value="40"></div>
+          <div class="chip c7"></div>
+          <div class="chip c8" data-value="30"></div>
+          <div class="chip c5" data-value="20"></div>
+          <div class="chip c9" data-value="20"></div>
+          <div class="chip c10" data-value="10"></div>
+          <div class="chip c11" data-value="40"></div>
+        </div>
+        
+        
+        <style>
+          .example-3 .chips {
+            position: relative;
+            height: 200px;
+            top: 100px
+          }
+        </style>
+        
+        <script>
+        
+          (function() {
+            
+            function shuffle(o) {
+              for( var j, x, i = o.length; i; j = Math.floor(Math.random() * i ), x = o[--i], o[i] = o[j], o[j] = x); return o;
+            };
+            
+            function layout() {
+              $('.chip').layout({
+                sort: 'value', 
+                order: 'desc', 
+                stack: {
+                  sort: 'value', 
+                  offset: {
+                    top: -10, 
+                    left: 0
+                  }
+                }
+              });
+            }
+            
+            $( ".example-2 .chip " ).on('click', function() {
+              var $elem = $(this);
+              console.log("$elem: ", $elem);
+              $(".chip").animate(function() {
+                console.log("$elem: ", $elem, $elem.parent());
+                if ($elem.parent().is('.chips-bet')) {
+                  $( ".example-2 .chips-balance" ).append($elem);
+                } else {
+                  $( ".example-2 .chips-bet" ).append($elem);
+                }
+                layout();
+              });
+            });
+
+            layout();
+          
+          })();
+          
+        </script>
+        
+        
+        
+        
+      </section>
+      
+    </div>
+  </body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>jquery-transmate | special</title>
+    <!-- example dependencies -->
+    <link rel="stylesheet" href="vendor/components/bootstrap/dist/css/bootstrap.css">
+    <script src="vendor/components/jquery/jquery.js"></script>
+    
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/blocks.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/chips.css">
+    
+    <script src="../src/js/jquery.fx.tweener-transitions.js"></script>
+    
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-header">
+        <h1>jquery.transmate <small>special</small></h1>
+      </div>
+      
+      <div class="example example-1">
+        <h2>Example</h2>
+        <p><em>Define delay and duration on a per-prop-basis.</em></p>
+        <form class="form-inline form-group">
+          <button id="go" class="go btn btn-default" type="button">Run</button>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" name="css_transitions" value="value" checked> cssTransitions
+            </label>
+          </div>
+        </form>
+        <div class="block">1</div>
+        <script>
+          $(function() {
+            
+            function animate($elem) {
+              $elem.animate({left: "+=50px", top: "+=50px"}, {
+                cssTransitions: $(".example-1 input[type='checkbox'][name='css_transitions']:checked").length > 0, 
+                easing: 'linear', 
+                duration: 1000, 
+                specialDelay: {top: 1000},  
+                specialDuration: {top: 200},  
+                complete: function() {
+                  console.log("complete.");
+                }
+              }).promise().done(function() {
+                console.warn("promise done");
+              });
+            }
+            
+            $('#go').on('click', function() {
+              animate($('.block'));
+            });
+            
+          });
+          
+        </script>
+      </div>
+      
+      
+    </div>
+  </body>
+</html>
