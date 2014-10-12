@@ -4,7 +4,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     copy: {
       dist: {
-        expand: true, cwd: 'src/', src: ['js/**'], dest: 'dist/'
+        expand: true, cwd: 'src/', src: ['**'], dest: 'dist/'
       }
     }, 
     uglify: {
@@ -13,7 +13,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/jquery.layout.min.js': [ 'dist/js/jquery.layout.js']
+          'dist/jquery.layout.min.js': [ 'dist/jquery.layout.js']
         }
       }
     }

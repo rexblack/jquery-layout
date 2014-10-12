@@ -77,6 +77,17 @@
     return originalHeight != contentHeight;
   }
   
+  function isAutoWidth(elem) {
+    var clone = elem.cloneNode();
+    clone.style.height = "";
+    elem.parentNode.insertBefore(clone, elem);
+    var originalWidth = $(clone).width();
+    $(clone).css('font-size', '12px').html('test');
+    var contentWidth = $(clone).width();
+    elem.parentNode.removeChild(clone);
+    return originalWidth != contentWidth;
+  }
+  
   
   function camelize(string) {
     return string.replace(/(\-[a-z])/g, function($1){return $1.toUpperCase().replace('-','');});
@@ -308,7 +319,9 @@
       css: {
         fontSize: elem.style.fontSize, 
         textAlign: elem.style.textAlign, 
-        verticalAlign: elem.style.verticalAlign, 
+        verticalAlign: elem.style.verticalAlign,
+        width: elem.style.width,  
+        height: elem.style.height  
       }, 
       wrappers: []
     };
@@ -325,8 +338,7 @@
       // measure time
       var startTime = new Date().getTime();
       
-      // reset styles
-      $(parent).css(restore.css);
+      
       
       // options
       this.options = $.extend({}, defaults, this && this.options, options);
@@ -355,26 +367,18 @@
         elems = $.grep(items, function(elem, index) {
           return $(elem).is(":visible");
         }), 
-        elemDatas = [], 
-        parent = this.elem, 
-        $parent = $elem;
+        elemDatas = [];
         
         
+      // reset styles
+      //$parent.css(restore.css);
+      //console.log("restore: ", restore.css, parent);
+        
+      
       var 
-        parentWidth = $parent.innerWidth(), 
-        parentHeight = $parent.innerHeight(),
-        parentPadding = {
-          left: parseFloat($parent.css('paddingLeft')), 
-          top: parseFloat($parent.css('paddingTop')), 
-          right: parseFloat($parent.css('paddingRight')),
-          bottom: parseFloat($parent.css('paddingBottom'))
-        }, 
-        parentContentWidth = parentWidth - parentPadding.left - parentPadding.right, 
-        parentContentHeight = parentHeight - parentPadding.top - parentPadding.bottom, 
         contentWidth = 0, 
-        contentHeight = 0, 
-        totalWidth = parentPadding.left + parentPadding.right, 
-        totalHeight = parentPadding.top + parentPadding.bottom; 
+        contentHeight = 0; 
+        
       
       // setup item data
       var 
@@ -425,7 +429,7 @@
             width: elemWidth, 
             height: 0, 
             left: newRow ? 0 : currentColumn.left + currentColumn.width,
-            top: contentHeight, 
+            top: 0, //contentHeight?
             elems: []
           };
           currentRow.columns.push(currentColumn);
@@ -448,6 +452,7 @@
             var elemHeight = elemData.height;
             var computedOffset = opts.stack && typeof opts.stack.offset == 'function';
             offset = computedOffset ? opts.stack.offset.call(elem, stackIndex, elems.length, offset) : offset;
+            
             elemData.offset = {
               left: offset.left, 
               top: offset.top
@@ -464,10 +469,32 @@
           row.height = Math.max(row.height, column.height);
           column.top = contentHeight;
         }
+        contentWidth = Math.max(row.width, contentWidth);
         contentHeight+= row.height;
       }
       
-      // setup coords
+      
+      
+      
+      var 
+        parent = this.elem, 
+        $parent = $elem, 
+        parentWidth = $parent.innerWidth(), 
+        parentHeight = $parent.innerHeight(),
+        parentPadding = {
+          left: parseFloat($parent.css('paddingLeft')), 
+          top: parseFloat($parent.css('paddingTop')), 
+          right: parseFloat($parent.css('paddingRight')),
+          bottom: parseFloat($parent.css('paddingBottom'))
+        }, 
+        parentContentWidth = parentWidth - parentPadding.left - parentPadding.right, 
+        parentContentHeight = parentHeight - parentPadding.top - parentPadding.bottom;
+        
+      var totalWidth = parentPadding.left + parentPadding.right + contentWidth;
+      var totalHeight = parentPadding.top + parentPadding.bottom + contentHeight; 
+      console.info("--------->", parentContentWidth, parentContentHeight, totalWidth, totalHeight);
+      
+      // setup positions
       for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
         for (var columnIndex = 0, column; column = row.columns[columnIndex]; columnIndex++) {
           for (var stackIndex = 0, elemData; elemData = column.elems[stackIndex]; stackIndex++) {
@@ -510,15 +537,16 @@
           }
         }
       }
-      totalHeight+= contentHeight;
+      
       
       // sort by positions and stack-index
+      /*
       elemDatas.sort(function(a, b) {
         var pos = (a.column.top - b.column.top) * (a.column.left - b.column.left);
         if (pos == 0) {
           return a.stackIndex - b.stackIndex;
         }
-      });
+      });*/
       
       // update elems
       elems = $.map(elemDatas, function(elemData, index) {
@@ -533,12 +561,12 @@
         // absolute
         
         $elemDatas.each(function(index, elemData) {
-          
+
           var css = {
             position: 'absolute', 
             left: elemData.left + "px", 
             top: elemData.top + "px", 
-            zIndex: elemData.stackIndex, 
+            zIndex: elemData.column.elems.length - elemData.stackIndex, 
             display: 'block'
           };
           css[transformStyle] = '';
@@ -558,7 +586,7 @@
             position: 'absolute', 
             left: "0px", 
             top: "0px", 
-            zIndex: elemData.stackIndex,
+            //zIndex: elemData.column.elems.length - elemData.stackIndex, 
             display: 'block', 
             fontSize: ''
           };
@@ -620,6 +648,7 @@
       // restore
       var css = {
         position: '', 
+        width: '', 
         height: '', 
         textAlign: '', 
         verticalAlign: '', 
@@ -636,6 +665,11 @@
         // auto-height
         if (isAutoHeight(parent)) {
           css.height = totalHeight;
+        }
+        
+        if (isAutoWidth(parent)) {
+          console.log("auto-width", totalWidth, totalHeight);
+          css.width = totalWidth;
         }
         
       }
