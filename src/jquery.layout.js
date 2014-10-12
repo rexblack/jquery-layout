@@ -478,7 +478,15 @@
       
       var 
         parent = this.elem, 
-        $parent = $elem, 
+        $parent = $elem;
+        
+        // reset size
+        $parent.css({
+          width: '', 
+          height: ''
+        });
+        
+      var 
         parentWidth = $parent.innerWidth(), 
         parentHeight = $parent.innerHeight(),
         parentPadding = {
@@ -663,6 +671,8 @@
       if (style == 'absolute' || style == 'transform') {
         
         // auto-height
+        
+        
         if (isAutoHeight(parent)) {
           css.height = totalHeight;
         }
