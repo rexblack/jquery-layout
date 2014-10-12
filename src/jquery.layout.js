@@ -370,11 +370,6 @@
         elemDatas = [];
         
         
-      // reset styles
-      //$parent.css(restore.css);
-      //console.log("restore: ", restore.css, parent);
-        
-      
       var 
         contentWidth = 0, 
         contentHeight = 0; 
@@ -500,7 +495,6 @@
         
       var totalWidth = parentPadding.left + parentPadding.right + contentWidth;
       var totalHeight = parentPadding.top + parentPadding.bottom + contentHeight; 
-      console.info("--------->", parentContentWidth, parentContentHeight, totalWidth, totalHeight);
       
       // setup positions
       for (var rowIndex = 0, row; row = rows[rowIndex]; rowIndex++) {
@@ -678,7 +672,6 @@
         }
         
         if (isAutoWidth(parent)) {
-          console.log("auto-width", totalWidth, totalHeight);
           css.width = totalWidth;
         }
         
