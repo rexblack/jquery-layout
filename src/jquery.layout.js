@@ -214,6 +214,7 @@
   }
   
   function optionPrefilter(options) {
+    //console.log("OPTION PREFILTER: ", this, options, options.align, options.textAlign);
     var opts = $.extend({}, options, {
       // override
       align: $.extend({}, parseAlign(options.align), parseAlign(options.textAlign, ['left']), parseAlign(options.verticalAlign, ['top'])), 
@@ -280,7 +281,7 @@
   
   var pluginName = "layout";
   var defaults = {
-    align: 'left top', 
+    align: 'auto', 
     bindResize: true, 
     sort: false, 
     stack: false,  
@@ -568,7 +569,8 @@
             position: 'absolute', 
             left: elemData.left + "px", 
             top: elemData.top + "px", 
-            zIndex: elemData.column.elems.length - elemData.stackIndex, 
+            //zIndex: elemData.column.elems.length - elemData.stackIndex,
+            zIndex: stackIndex,  
             display: 'block'
           };
           css[transformStyle] = '';
@@ -642,6 +644,24 @@
           
         });
         
+      } else {
+        // restore
+        $elemDatas.each(function(index, elemData) {
+          
+          var css = {
+            position: '', 
+            display: '', 
+            fontSize: '', 
+            zIndex: '', 
+            top: '', 
+            left: ''
+          };
+          
+          css[getVendorStyle('order')] = '';
+          css[transformStyle] = '';
+          $(elemData.elem).css(css);
+          
+        });
       }
       
       
@@ -666,6 +686,10 @@
         
         // auto-height
         
+        var positionStyle = $parent.css('position');
+        if (positionStyle == 'static') {
+          css.position = 'relative';
+        }
         
         if (isAutoHeight(parent)) {
           css.height = totalHeight;
@@ -674,6 +698,8 @@
         if (isAutoWidth(parent)) {
           css.width = totalWidth;
         }
+        
+        
         
       }
       
