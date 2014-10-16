@@ -440,7 +440,7 @@
             var elemWidth = elemData.height;
             var elemHeight = elemData.height;
             var computedOffset = opts.stack && typeof opts.stack.offset == 'function';
-            offset = computedOffset ? opts.stack.offset.call(elem, stackIndex, elems.length, offset) : opts.stack.offset;
+            offset = computedOffset ? opts.stack.offset.call(elem, stackIndex, elems.length, offset) : opts.stack ? opts.stack.offset : {top: 0, left: 0};
             elemData.offset = {
               left: offset.left, 
               top: offset.top
