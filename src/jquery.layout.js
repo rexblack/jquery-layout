@@ -284,15 +284,8 @@
     align: 'auto', 
     bindResize: true, 
     sort: false, 
-    stack: false,  
-    style: 'absolute', 
-    item: {
-      offset: {
-        left: 0, top: 0
-      }
-    }
+    style: 'absolute'
   };
-  
   
   // setup styles
   var styles = (function(styles) {
@@ -448,7 +441,7 @@
             var elemHeight = elemData.height;
             var computedOffset = opts.stack && typeof opts.stack.offset == 'function';
             offset = computedOffset ? opts.stack.offset.call(elem, stackIndex, elems.length, offset) : opts.stack.offset;
-            
+            console.warn("opts.stack.offset: ", opts.stack.offset);
             elemData.offset = {
               left: offset.left, 
               top: offset.top
